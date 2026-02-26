@@ -36,6 +36,70 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     }
   }
 
+  Future<void> _subscribeToPlan(String planKey, Map<String, dynamic> plan) async {
+    final auth = context.read<AuthProvider>();
+    final user = auth.currentUser;
+    if (user == null) return;
+
+    final planName = plan['name'] as String;
+    final amount = plan['amount'] as double;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Subscribe to $planName'),
+        content: Text(
+          amount == 0
+              ? 'Switch to the Free plan?'
+              : 'Subscribe to $planName for \$${amount.toStringAsFixed(2)}/month?\n\nYour plan will be active for 30 days.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    final success = await context.read<SubscriptionProvider>().subscribeToPlan(
+      artistId: user.uid,
+      artistName: user.name,
+      artistEmail: user.email,
+      planKey: planKey,
+      amount: amount,
+      postLimit: plan['postLimit'] as int,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Subscribed to $planName!'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to subscribe. Please try again.'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -182,7 +246,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Contact admin to upgrade your plan.',
+                  'Choose a plan that suits your needs.',
                   style: TextStyle(color: AppTheme.textLight, fontSize: 13),
                 ),
                 const SizedBox(height: 16),
@@ -209,71 +273,102 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                         width: isCurrent ? 2 : 1,
                       ),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    plan['name'] as String,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                      color: isCurrent
-                                          ? AppTheme.primary
-                                          : AppTheme.textDark,
-                                    ),
-                                  ),
-                                  if (isCurrent) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primary,
-                                        borderRadius:
-                                            BorderRadius.circular(8),
-                                      ),
-                                      child: const Text(
-                                        'Current',
+                                  Row(
+                                    children: [
+                                      Text(
+                                        plan['name'] as String,
                                         style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
                                           fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                          color: isCurrent
+                                              ? AppTheme.primary
+                                              : AppTheme.textDark,
                                         ),
                                       ),
+                                      if (isCurrent) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primary,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: const Text(
+                                            'Current',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    (plan['postLimit'] as int) == -1
+                                        ? 'Unlimited posts'
+                                        : 'Up to ${plan['postLimit']} posts',
+                                    style: const TextStyle(
+                                      color: AppTheme.textLight,
+                                      fontSize: 13,
                                     ),
-                                  ],
+                                  ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                (plan['postLimit'] as int) == -1
-                                    ? 'Unlimited posts'
-                                    : 'Up to ${plan['postLimit']} posts',
-                                style: const TextStyle(
-                                  color: AppTheme.textLight,
-                                  fontSize: 13,
+                            ),
+                            Text(
+                              (plan['amount'] as double) == 0
+                                  ? 'Free'
+                                  : '\$${(plan['amount'] as double).toStringAsFixed(2)}/mo',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: isCurrent
+                                    ? AppTheme.primary
+                                    : AppTheme.accent,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (!isCurrent) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: subProv.isLoading
+                                  ? null
+                                  : () => _subscribeToPlan(key, plan),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                            ],
+                              child: Text(
+                                key == 'free' ? 'Switch to Free' : 'Subscribe',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        Text(
-                          (plan['amount'] as double) == 0
-                              ? 'Free'
-                              : '\$${(plan['amount'] as double).toStringAsFixed(2)}/mo',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: isCurrent
-                                ? AppTheme.primary
-                                : AppTheme.accentGold,
-                          ),
-                        ),
+                        ],
                       ],
                     ),
                   );

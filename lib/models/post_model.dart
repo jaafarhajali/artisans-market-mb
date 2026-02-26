@@ -8,6 +8,7 @@ class PostModel {
   final String category;
   final String status;
   final String imageUrl;
+  final double price;
   final DateTime? createdAt;
 
   PostModel({
@@ -18,6 +19,7 @@ class PostModel {
     required this.category,
     this.status = 'active',
     required this.imageUrl,
+    this.price = 0.0,
     this.createdAt,
   });
 
@@ -35,6 +37,7 @@ class PostModel {
       category: data['category'] ?? '',
       status: data['status'] ?? 'active',
       imageUrl: data['imageUrl'] ?? '',
+      price: (data['price'] ?? 0.0).toDouble(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -47,6 +50,7 @@ class PostModel {
       'category': category,
       'status': status,
       'imageUrl': imageUrl,
+      'price': price,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }

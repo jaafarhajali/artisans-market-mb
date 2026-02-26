@@ -14,4 +14,11 @@ class AppRoutes {
   static const String subscription = '/subscription';
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
+  static const String cart = '/cart';
+  static const String checkout = '/checkout';
+  static const String customerOrders = '/customer-orders';
+  static const String orderDetail = '/order-detail';
+  static const String artistOrders = '/artist-orders';
+  static const String wallet = '/wallet';
+  static const String notifications = '/notifications';
 }

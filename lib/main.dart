@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'config/app_theme.dart';
+import 'config/supabase_config.dart';
 import 'config/app_routes.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
-import 'services/storage_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/post_provider.dart';
 import 'providers/rating_provider.dart';
 import 'providers/report_provider.dart';
 import 'providers/subscription_provider.dart';
 import 'providers/user_provider.dart';
+import 'providers/cart_provider.dart';
+import 'providers/order_provider.dart';
+import 'providers/payment_provider.dart';
+import 'providers/wallet_provider.dart';
+import 'providers/notification_provider.dart';
 import 'models/post_model.dart';
+import 'models/order_model.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
@@ -21,15 +28,27 @@ import 'screens/customer/customer_home_screen.dart';
 import 'screens/customer/post_detail_screen.dart';
 import 'screens/customer/rate_artist_screen.dart';
 import 'screens/customer/report_post_screen.dart';
+import 'screens/customer/cart_screen.dart';
+import 'screens/customer/checkout_screen.dart';
+import 'screens/customer/orders_screen.dart';
+import 'screens/customer/order_detail_screen.dart';
 import 'screens/artist/artist_home_screen.dart';
 import 'screens/artist/edit_post_screen.dart';
+import 'screens/artist/artist_orders_screen.dart';
+import 'screens/artist/wallet_screen.dart';
+import 'screens/artist/subscription_screen.dart';
 import 'screens/shared/profile_screen.dart';
 import 'screens/shared/edit_profile_screen.dart';
+import 'screens/shared/notifications_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await Supabase.initialize(
+    url: SupabaseConfig.url,
+    anonKey: SupabaseConfig.anonKey,
   );
   runApp(const ArtisansMarketApp());
 }
@@ -41,15 +60,13 @@ class ArtisansMarketApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final authService = AuthService();
     final firestoreService = FirestoreService();
-    final storageService = StorageService();
-
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
           create: (_) => AuthProvider(authService, firestoreService),
         ),
         ChangeNotifierProvider(
-          create: (_) => PostProvider(firestoreService, storageService),
+          create: (_) => PostProvider(firestoreService),
         ),
         ChangeNotifierProvider(
           create: (_) => RatingProvider(firestoreService),
@@ -62,6 +79,21 @@ class ArtisansMarketApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => UserProvider(firestoreService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CartProvider(firestoreService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OrderProvider(firestoreService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PaymentProvider(firestoreService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => WalletProvider(firestoreService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NotificationProvider(firestoreService),
         ),
       ],
       child: MaterialApp(
@@ -112,6 +144,31 @@ class ArtisansMarketApp extends StatelessWidget {
             case AppRoutes.editProfile:
               return MaterialPageRoute(
                   builder: (_) => const EditProfileScreen());
+            case AppRoutes.cart:
+              return MaterialPageRoute(
+                  builder: (_) => const CartScreen());
+            case AppRoutes.checkout:
+              return MaterialPageRoute(
+                  builder: (_) => const CheckoutScreen());
+            case AppRoutes.customerOrders:
+              return MaterialPageRoute(
+                  builder: (_) => const OrdersScreen());
+            case AppRoutes.orderDetail:
+              final order = settings.arguments as OrderModel;
+              return MaterialPageRoute(
+                  builder: (_) => OrderDetailScreen(order: order));
+            case AppRoutes.artistOrders:
+              return MaterialPageRoute(
+                  builder: (_) => const ArtistOrdersScreen());
+            case AppRoutes.wallet:
+              return MaterialPageRoute(
+                  builder: (_) => const WalletScreen());
+            case AppRoutes.subscription:
+              return MaterialPageRoute(
+                  builder: (_) => const SubscriptionScreen());
+            case AppRoutes.notifications:
+              return MaterialPageRoute(
+                  builder: (_) => const NotificationsScreen());
             default:
               return MaterialPageRoute(
                   builder: (_) => const LoginScreen());

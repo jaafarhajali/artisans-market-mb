@@ -119,13 +119,13 @@ class _RateArtistScreenState extends State<RateArtistScreen> {
                       padding: const EdgeInsets.all(12),
                       margin: const EdgeInsets.only(bottom: 20),
                       decoration: BoxDecoration(
-                        color: AppTheme.accentGold.withValues(alpha: 0.1),
+                        color: AppTheme.accent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.accentGold),
+                        border: Border.all(color: AppTheme.accent),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.info_outline, color: AppTheme.accentGold),
+                          Icon(Icons.info_outline, color: AppTheme.accent),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(

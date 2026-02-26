@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_theme.dart';
@@ -20,8 +19,8 @@ class CreatePostScreen extends StatefulWidget {
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
+  final _priceController = TextEditingController();
   String? _selectedCategory;
-  File? _imageFile;
   String? _imageUrl;
 
   @override
@@ -38,16 +37,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   @override
   void dispose() {
     _descriptionController.dispose();
+    _priceController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_imageFile == null && (_imageUrl == null || _imageUrl!.isEmpty)) {
+    if (_imageUrl == null || _imageUrl!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please add an image'),
+          content: Text('Please add an image URL'),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -77,12 +77,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return;
     }
 
+    final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
+
     final success = await postProv.createPost(
       artistId: uid,
       artistName: artistName,
       description: _descriptionController.text.trim(),
       category: _selectedCategory!,
-      imageFile: _imageFile,
+      price: price,
       imageUrl: _imageUrl,
     );
 
@@ -97,8 +99,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       );
       setState(() {
         _descriptionController.clear();
+        _priceController.clear();
         _selectedCategory = null;
-        _imageFile = null;
         _imageUrl = null;
       });
     } else {
@@ -171,9 +173,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ),
               const SizedBox(height: 8),
               ImagePickerWidget(
-                onImageSelected: (file, url) {
+                onImageSelected: (_, url) {
                   setState(() {
-                    _imageFile = file;
                     _imageUrl = url;
                   });
                 },
@@ -194,6 +195,28 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 onChanged: (val) => setState(() => _selectedCategory = val),
                 validator: (val) =>
                     val == null ? 'Please select a category' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Price
+              TextFormField(
+                controller: _priceController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Price (USD)',
+                  prefixIcon: Icon(Icons.attach_money),
+                  hintText: '0.00',
+                ),
+                validator: (value) {
+                  if (value != null && value.isNotEmpty) {
+                    final price = double.tryParse(value);
+                    if (price == null || price < 0) {
+                      return 'Please enter a valid price';
+                    }
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
 

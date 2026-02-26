@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/app_theme.dart';
+import '../../services/storage_service.dart';
 
 class ImagePickerWidget extends StatefulWidget {
   final String? initialUrl;
-  final void Function(File? file, String? url) onImageSelected;
+  final void Function(void, String? url) onImageSelected;
 
   const ImagePickerWidget({
     super.key,
@@ -19,8 +20,9 @@ class ImagePickerWidget extends StatefulWidget {
 }
 
 class _ImagePickerWidgetState extends State<ImagePickerWidget> {
-  File? _imageFile;
   String? _imageUrl;
+  bool _isUploading = false;
+  final _storageService = StorageService();
   final _picker = ImagePicker();
 
   @override
@@ -29,35 +31,100 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
     _imageUrl = widget.initialUrl;
   }
 
-  Future<void> _pickFromCamera() async {
-    final picked = await _picker.pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 80,
+  void _showPickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Add Image',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: AppTheme.primary),
+                title: const Text('Take Photo'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading:
+                    const Icon(Icons.photo_library, color: AppTheme.primary),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.link, color: AppTheme.primary),
+                title: const Text('Enter URL'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _enterUrl();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-    if (picked != null) {
-      setState(() {
-        _imageFile = File(picked.path);
-        _imageUrl = null;
-      });
-      widget.onImageSelected(_imageFile, null);
-    }
   }
 
-  Future<void> _pickFromGallery() async {
-    final picked = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 80,
-    );
-    if (picked != null) {
-      setState(() {
-        _imageFile = File(picked.path);
-        _imageUrl = null;
-      });
-      widget.onImageSelected(_imageFile, null);
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picked = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
+      if (picked == null) return;
+
+      setState(() => _isUploading = true);
+
+      final file = File(picked.path);
+      final url = await _storageService.uploadPostImage(file);
+
+      if (!mounted) return;
+
+      if (url != null) {
+        setState(() {
+          _imageUrl = url;
+          _isUploading = false;
+        });
+        widget.onImageSelected(null, url);
+      } else {
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to upload image. Please try again.'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not pick image. Please try again.'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
     }
   }
 
@@ -85,7 +152,6 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
               if (url.isNotEmpty) {
                 setState(() {
                   _imageUrl = url;
-                  _imageFile = null;
                 });
                 widget.onImageSelected(null, url);
               }
@@ -98,54 +164,10 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
     );
   }
 
-  void _showOptions() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt, color: AppTheme.primary),
-                title: const Text('Take Photo'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickFromCamera();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library,
-                    color: AppTheme.accentBrown),
-                title: const Text('Choose from Gallery'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickFromGallery();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.link, color: AppTheme.accentGold),
-                title: const Text('Enter Image URL'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _enterUrl();
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _showOptions,
+      onTap: _isUploading ? null : _showPickerOptions,
       child: Container(
         height: 200,
         width: double.infinity,
@@ -161,12 +183,16 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
   }
 
   Widget _buildContent() {
-    if (_imageFile != null) {
-      return Stack(
-        fit: StackFit.expand,
+    if (_isUploading) {
+      return const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.file(_imageFile!, fit: BoxFit.cover),
-          _buildEditOverlay(),
+          CircularProgressIndicator(color: AppTheme.primary),
+          SizedBox(height: 12),
+          Text(
+            'Uploading image...',
+            style: TextStyle(color: AppTheme.textLight),
+          ),
         ],
       );
     }
@@ -182,7 +208,8 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
               child: CircularProgressIndicator(color: AppTheme.primary),
             ),
             errorWidget: (_, __, ___) => const Center(
-              child: Icon(Icons.broken_image, size: 48, color: AppTheme.textLight),
+              child: Icon(Icons.broken_image,
+                  size: 48, color: AppTheme.textLight),
             ),
           ),
           _buildEditOverlay(),

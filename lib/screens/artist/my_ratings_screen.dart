@@ -52,7 +52,7 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                   style: const TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.accentGold,
+                    color: AppTheme.accent,
                   ),
                 ),
                 const SizedBox(height: 8),

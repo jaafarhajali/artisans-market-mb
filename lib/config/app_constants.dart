@@ -25,6 +25,40 @@ class AppConstants {
   static const String reportPending = 'pending';
   static const String reportReviewed = 'reviewed';
 
+  // Order statuses
+  static const String orderPending = 'pending';
+  static const String orderPaid = 'paid';
+  static const String orderProcessing = 'processing';
+  static const String orderShipped = 'shipped';
+  static const String orderDelivered = 'delivered';
+  static const String orderCancelled = 'cancelled';
+  static const String orderRefunded = 'refunded';
+
+  // Payout status
+  static const String payoutUnpaid = 'unpaid';
+  static const String payoutPaid = 'paid_out';
+
+  // Payment constants
+  static const double platformFeePercent = 0.10;
+  static const double minWithdrawal = 20.0;
+  static const int refundDays = 7;
+  static const String currency = 'USD';
+
+  // Payment methods
+  static const String paymentVirtualCard = 'virtual_card';
+  static const String paymentVirtualVisa = 'virtual_visa';
+
+  // Payment types
+  static const String paymentTypeOrder = 'order_payment';
+  static const String paymentTypeRefund = 'refund';
+  static const String paymentTypePayout = 'payout';
+
+  // Notification types
+  static const String notifOrderPlaced = 'order_placed';
+  static const String notifOrderStatus = 'order_status';
+  static const String notifPaymentReceived = 'payment_received';
+  static const String notifPayout = 'payout';
+
   // Subscription plans
   static const Map<String, Map<String, dynamic>> plans = {
     'free': {'name': 'Free', 'amount': 0.0, 'postLimit': 5},
@@ -39,6 +73,11 @@ class AppConstants {
   static const String ratingsCollection = 'ratings';
   static const String subscriptionsCollection = 'subscriptions';
   static const String adminsCollection = 'admins';
+  static const String ordersCollection = 'orders';
+  static const String paymentsCollection = 'payments';
+  static const String walletsCollection = 'wallets';
+  static const String notificationsCollection = 'notifications';
+  static const String cartSubcollection = 'cart';
 
   // Pagination
   static const int pageSize = 20;

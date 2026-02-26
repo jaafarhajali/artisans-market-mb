@@ -5,11 +5,16 @@ import '../../config/app_routes.dart';
 import '../../config/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/post_provider.dart';
+import '../../providers/cart_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../widgets/post_card.dart';
 import '../../widgets/category_chip.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/empty_state.dart';
 import '../../screens/shared/profile_screen.dart';
+import '../../screens/customer/cart_screen.dart';
+import '../../screens/customer/orders_screen.dart';
+import '../../screens/shared/notifications_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -26,7 +31,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final uid = context.read<AuthProvider>().currentUser?.uid;
       context.read<PostProvider>().loadActivePosts();
+      if (uid != null) {
+        context.read<CartProvider>().loadCart(uid);
+        context.read<NotificationProvider>().startListening(uid);
+      }
     });
   }
 
@@ -37,14 +47,54 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      _buildFeed(),
+      const CartScreen(),
+      const OrdersScreen(),
+      const NotificationsScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
-      body: _currentIndex == 0 ? _buildFeed() : const ProfileScreen(),
+      body: screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        items: [
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Consumer<CartProvider>(
+              builder: (_, cartProv, child) {
+                final count = cartProv.itemCount;
+                if (count == 0) return child!;
+                return Badge(
+                  label: Text('$count'),
+                  child: child,
+                );
+              },
+              child: const Icon(Icons.shopping_cart),
+            ),
+            label: 'Cart',
+          ),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long), label: 'Orders'),
+          BottomNavigationBarItem(
+            icon: Consumer<NotificationProvider>(
+              builder: (_, notifProv, child) {
+                final count = notifProv.unreadCount;
+                if (count == 0) return child!;
+                return Badge(
+                  label: Text('$count'),
+                  child: child,
+                );
+              },
+              child: const Icon(Icons.notifications),
+            ),
+            label: 'Alerts',
+          ),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );

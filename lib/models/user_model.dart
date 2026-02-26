@@ -9,6 +9,7 @@ class UserModel {
   final DateTime? createdAt;
   final String? category;
   final double? averageRating;
+  final String? profileImageUrl;
 
   UserModel({
     required this.uid,
@@ -19,6 +20,7 @@ class UserModel {
     this.createdAt,
     this.category,
     this.averageRating,
+    this.profileImageUrl,
   });
 
   bool get isArtist => role == 'artist';
@@ -37,6 +39,7 @@ class UserModel {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       category: data['category'],
       averageRating: (data['averageRating'] as num?)?.toDouble(),
+      profileImageUrl: data['profileImageUrl'],
     );
   }
 
@@ -52,6 +55,9 @@ class UserModel {
       map['category'] = category ?? '';
       map['averageRating'] = averageRating ?? 0.0;
     }
+    if (profileImageUrl != null) {
+      map['profileImageUrl'] = profileImageUrl;
+    }
     return map;
   }
 
@@ -62,6 +68,7 @@ class UserModel {
     String? status,
     String? category,
     double? averageRating,
+    String? profileImageUrl,
   }) {
     return UserModel(
       uid: uid,
@@ -72,6 +79,7 @@ class UserModel {
       createdAt: createdAt,
       category: category ?? this.category,
       averageRating: averageRating ?? this.averageRating,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
     );
   }
 }

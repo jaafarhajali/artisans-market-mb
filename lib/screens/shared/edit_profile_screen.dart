@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/app_theme.dart';
 import '../../config/app_constants.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/storage_service.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../widgets/common/custom_button.dart';
 
@@ -17,6 +21,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   String? _selectedCategory;
+  String? _profileImageUrl;
+  bool _isUploadingImage = false;
+  final _storageService = StorageService();
+  final _picker = ImagePicker();
 
   @override
   void initState() {
@@ -24,12 +32,103 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.read<AuthProvider>().currentUser;
     _nameController = TextEditingController(text: user?.name ?? '');
     _selectedCategory = user?.category;
+    _profileImageUrl = user?.profileImageUrl;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  void _showImageOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Profile Photo',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: AppTheme.primary),
+                title: const Text('Take Photo'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickProfileImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading:
+                    const Icon(Icons.photo_library, color: AppTheme.primary),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickProfileImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickProfileImage(ImageSource source) async {
+    try {
+      final picked = await _picker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      if (picked == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      final user = context.read<AuthProvider>().currentUser;
+      final file = File(picked.path);
+      final url =
+          await _storageService.uploadProfileImage(file, user?.uid ?? '');
+
+      if (!mounted) return;
+
+      if (url != null) {
+        setState(() {
+          _profileImageUrl = url;
+          _isUploadingImage = false;
+        });
+      } else {
+        setState(() => _isUploadingImage = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to upload image. Please try again.'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploadingImage = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not pick image. Please try again.'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
   }
 
   Future<void> _save() async {
@@ -48,6 +147,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (user.role == AppConstants.roleArtist &&
         _selectedCategory != user.category) {
       data['category'] = _selectedCategory;
+    }
+
+    if (_profileImageUrl != user.profileImageUrl) {
+      data['profileImageUrl'] = _profileImageUrl;
     }
 
     if (data.isEmpty) {
@@ -77,6 +180,78 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Widget _buildProfileImage() {
+    final user = context.read<AuthProvider>().currentUser;
+    final initial =
+        (user?.name.isNotEmpty ?? false) ? user!.name[0].toUpperCase() : '?';
+
+    return GestureDetector(
+      onTap: _isUploadingImage ? null : _showImageOptions,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (_isUploadingImage)
+            CircleAvatar(
+              radius: 52,
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+              child:
+                  const CircularProgressIndicator(color: AppTheme.primary),
+            )
+          else if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
+            CircleAvatar(
+              radius: 52,
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+              child: ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: _profileImageUrl!,
+                  width: 104,
+                  height: 104,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => const CircularProgressIndicator(
+                      color: AppTheme.primary),
+                  errorWidget: (_, __, ___) => Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else
+            CircleAvatar(
+              radius: 52,
+              backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
+              child: Text(
+                initial,
+                style: const TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primary,
+                ),
+              ),
+            ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppTheme.primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child:
+                  const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.read<AuthProvider>().currentUser;
@@ -91,6 +266,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Profile Image
+              Center(child: _buildProfileImage()),
+              const SizedBox(height: 8),
+              const Center(
+                child: Text(
+                  'Tap to change photo',
+                  style: TextStyle(color: AppTheme.textLight, fontSize: 12),
+                ),
+              ),
+              const SizedBox(height: 24),
+
               CustomTextField(
                 controller: _nameController,
                 label: 'Name',

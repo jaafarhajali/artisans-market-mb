@@ -1,10 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_theme.dart';
 import '../../config/app_constants.dart';
 import '../../models/post_model.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/post_provider.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../widgets/common/custom_button.dart';
@@ -22,8 +20,8 @@ class EditPostScreen extends StatefulWidget {
 class _EditPostScreenState extends State<EditPostScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _descriptionController;
+  late final TextEditingController _priceController;
   late String? _selectedCategory;
-  File? _newImageFile;
   String? _newImageUrl;
 
   @override
@@ -31,6 +29,8 @@ class _EditPostScreenState extends State<EditPostScreen> {
     super.initState();
     _descriptionController =
         TextEditingController(text: widget.post.description);
+    _priceController =
+        TextEditingController(text: widget.post.price > 0 ? widget.post.price.toStringAsFixed(2) : '');
     _selectedCategory = widget.post.category;
     _newImageUrl = widget.post.imageUrl;
   }
@@ -38,13 +38,12 @@ class _EditPostScreenState extends State<EditPostScreen> {
   @override
   void dispose() {
     _descriptionController.dispose();
+    _priceController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
-    final artistId = context.read<AuthProvider>().currentUser!.uid;
 
     final Map<String, dynamic> data = {};
 
@@ -57,12 +56,14 @@ class _EditPostScreenState extends State<EditPostScreen> {
     if (_newImageUrl != null && _newImageUrl != widget.post.imageUrl) {
       data['imageUrl'] = _newImageUrl;
     }
+    final newPrice = double.tryParse(_priceController.text.trim()) ?? 0.0;
+    if (newPrice != widget.post.price) {
+      data['price'] = newPrice;
+    }
 
     final success = await context.read<PostProvider>().updatePost(
           widget.post.id,
           data,
-          newImageFile: _newImageFile,
-          artistId: artistId,
         );
 
     if (!mounted) return;
@@ -107,9 +108,8 @@ class _EditPostScreenState extends State<EditPostScreen> {
               const SizedBox(height: 8),
               ImagePickerWidget(
                 initialUrl: widget.post.imageUrl,
-                onImageSelected: (file, url) {
+                onImageSelected: (_, url) {
                   setState(() {
-                    _newImageFile = file;
                     _newImageUrl = url;
                   });
                 },
@@ -129,6 +129,28 @@ class _EditPostScreenState extends State<EditPostScreen> {
                 onChanged: (val) => setState(() => _selectedCategory = val),
                 validator: (val) =>
                     val == null ? 'Please select a category' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Price
+              TextFormField(
+                controller: _priceController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Price (USD)',
+                  prefixIcon: Icon(Icons.attach_money),
+                  hintText: '0.00',
+                ),
+                validator: (value) {
+                  if (value != null && value.isNotEmpty) {
+                    final price = double.tryParse(value);
+                    if (price == null || price < 0) {
+                      return 'Please enter a valid price';
+                    }
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
 

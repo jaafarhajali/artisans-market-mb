@@ -1,14 +1,11 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/post_model.dart';
 import '../services/firestore_service.dart';
-import '../services/storage_service.dart';
 import '../config/app_constants.dart';
 
 class PostProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
-  final StorageService _storageService;
 
   List<PostModel> _posts = [];
   List<PostModel> _myPosts = [];
@@ -16,7 +13,7 @@ class PostProvider extends ChangeNotifier {
   String? _error;
   String? _selectedCategory;
 
-  PostProvider(this._firestoreService, this._storageService);
+  PostProvider(this._firestoreService);
 
   List<PostModel> get posts => _posts;
   List<PostModel> get myPosts => _myPosts;
@@ -65,27 +62,21 @@ class PostProvider extends ChangeNotifier {
     required String artistName,
     required String description,
     required String category,
-    File? imageFile,
+    required double price,
     String? imageUrl,
   }) async {
     _setLoading(true);
     _error = null;
 
     try {
-      String finalImageUrl = imageUrl ?? '';
-
-      if (imageFile != null) {
-        finalImageUrl =
-            await _storageService.uploadPostImage(artistId, imageFile);
-      }
-
       final data = {
         'artistId': artistId,
         'artistName': artistName,
         'description': description,
         'category': category,
+        'price': price,
         'status': AppConstants.postActive,
-        'imageUrl': finalImageUrl,
+        'imageUrl': imageUrl ?? '',
         'createdAt': FieldValue.serverTimestamp(),
       };
 
@@ -101,20 +92,12 @@ class PostProvider extends ChangeNotifier {
 
   Future<bool> updatePost(
     String postId,
-    Map<String, dynamic> data, {
-    File? newImageFile,
-    String? artistId,
-  }) async {
+    Map<String, dynamic> data,
+  ) async {
     _setLoading(true);
     _error = null;
 
     try {
-      if (newImageFile != null && artistId != null) {
-        final newUrl =
-            await _storageService.uploadPostImage(artistId, newImageFile);
-        data['imageUrl'] = newUrl;
-      }
-
       await _firestoreService.updatePost(postId, data);
       _setLoading(false);
       return true;

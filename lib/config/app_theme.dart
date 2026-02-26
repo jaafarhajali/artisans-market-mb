@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primary = Color(0xFF5B7A4A);
-  static const Color primaryDark = Color(0xFF4A6A3A);
-  static const Color textDark = Color(0xFF3D2B1F);
-  static const Color textLight = Color(0xFF7A6B5D);
-  static const Color background = Color(0xFFFAF6F1);
+  static const Color primary = Color(0xFF2E86AB);
+  static const Color primaryDark = Color(0xFF1E6A8A);
+  static const Color textDark = Color(0xFF2C3E50);
+  static const Color textLight = Color(0xFF6B8A9E);
+  static const Color background = Color(0xFFF5FAFE);
   static const Color cardColor = Colors.white;
-  static const Color borderColor = Color(0xFFDDD0C0);
-  static const Color accentGold = Color(0xFFC8A96E);
-  static const Color accentBrown = Color(0xFFA0784C);
+  static const Color borderColor = Color(0xFFD4E4EC);
+  static const Color accent = Color(0xFFC8A870);
+  static const Color accentBrown = Color(0xFF8B6914);
   static const Color errorColor = Color(0xFFD9534F);
   static const Color successColor = Color(0xFF10B981);
 
@@ -19,7 +19,7 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
         primary: primary,
-        secondary: accentGold,
+        secondary: accent,
         tertiary: accentBrown,
         surface: background,
         error: errorColor,
@@ -92,7 +92,7 @@ class AppTheme {
         color: Colors.white,
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: accentGold,
+        backgroundColor: accent,
         foregroundColor: Colors.white,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(

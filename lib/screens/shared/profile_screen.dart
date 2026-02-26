@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/app_theme.dart';
 import '../../config/app_routes.dart';
 import '../../config/app_constants.dart';
@@ -23,21 +24,50 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               children: [
                 // Avatar
-                CircleAvatar(
-                  radius: 48,
-                  backgroundColor:
-                      AppTheme.primary.withValues(alpha: 0.15),
-                  child: Text(
-                    user.name.isNotEmpty
-                        ? user.name[0].toUpperCase()
-                        : '?',
-                    style: const TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primary,
+                if (user.profileImageUrl != null &&
+                    user.profileImageUrl!.isNotEmpty)
+                  CircleAvatar(
+                    radius: 48,
+                    backgroundColor:
+                        AppTheme.primary.withValues(alpha: 0.15),
+                    child: ClipOval(
+                      child: CachedNetworkImage(
+                        imageUrl: user.profileImageUrl!,
+                        width: 96,
+                        height: 96,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) =>
+                            const CircularProgressIndicator(
+                                color: AppTheme.primary),
+                        errorWidget: (_, __, ___) => Text(
+                          user.name.isNotEmpty
+                              ? user.name[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  CircleAvatar(
+                    radius: 48,
+                    backgroundColor:
+                        AppTheme.primary.withValues(alpha: 0.15),
+                    child: Text(
+                      user.name.isNotEmpty
+                          ? user.name[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primary,
+                      ),
                     ),
                   ),
-                ),
                 const SizedBox(height: 16),
 
                 // Name
@@ -127,6 +157,19 @@ class ProfileScreen extends StatelessWidget {
                     });
                   },
                 ),
+
+                // Subscription (artists only)
+                if (user.role == AppConstants.roleArtist)
+                  ListTile(
+                    leading: const Icon(Icons.card_membership,
+                        color: AppTheme.primary),
+                    title: const Text('My Subscription'),
+                    trailing: const Icon(Icons.chevron_right,
+                        color: AppTheme.textLight),
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.subscription);
+                    },
+                  ),
 
                 // Sign Out
                 ListTile(

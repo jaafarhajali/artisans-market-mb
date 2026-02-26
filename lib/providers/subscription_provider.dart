@@ -36,4 +36,33 @@ class SubscriptionProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  Future<bool> subscribeToPlan({
+    required String artistId,
+    required String artistName,
+    required String artistEmail,
+    required String planKey,
+    required double amount,
+    required int postLimit,
+  }) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await _firestoreService.subscribeToPlan(
+        artistId: artistId,
+        artistName: artistName,
+        artistEmail: artistEmail,
+        planKey: planKey,
+        amount: amount,
+        postLimit: postLimit,
+      );
+      await loadSubscription(artistId);
+      return true;
+    } catch (e) {
+      _error = 'Failed to subscribe. Please try again.';
+      _setLoading(false);
+      return false;
+    }
+  }
 }

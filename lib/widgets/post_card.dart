@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../config/app_theme.dart';
 import '../models/post_model.dart';
+import 'price_tag.dart';
 
 class PostCard extends StatelessWidget {
   final PostModel post;
@@ -109,6 +110,10 @@ class PostCard extends StatelessWidget {
                     style: const TextStyle(
                         color: AppTheme.textLight, fontSize: 14),
                   ),
+                  if (post.price > 0) ...[
+                    const SizedBox(height: 6),
+                    PriceTag(price: post.price, fontSize: 15),
+                  ],
                   const SizedBox(height: 8),
                   Row(
                     children: [

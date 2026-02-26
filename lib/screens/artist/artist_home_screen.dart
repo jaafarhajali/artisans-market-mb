@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/notification_provider.dart';
 import 'my_posts_screen.dart';
 import 'create_post_screen.dart';
-import 'my_ratings_screen.dart';
-import 'subscription_screen.dart';
+import 'artist_orders_screen.dart';
+import 'wallet_screen.dart';
 import '../shared/profile_screen.dart';
 
 class ArtistHomeScreen extends StatefulWidget {
@@ -18,10 +21,21 @@ class _ArtistHomeScreenState extends State<ArtistHomeScreen> {
   final List<Widget> _screens = const [
     MyPostsScreen(),
     CreatePostScreen(),
-    MyRatingsScreen(),
-    SubscriptionScreen(),
+    ArtistOrdersScreen(),
+    WalletScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final uid = context.read<AuthProvider>().currentUser?.uid;
+      if (uid != null) {
+        context.read<NotificationProvider>().startListening(uid);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +47,10 @@ class _ArtistHomeScreenState extends State<ArtistHomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.art_track), label: 'Posts'),
           BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: 'Create'),
-          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Ratings'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.card_membership), label: 'Plan'),
+              icon: Icon(Icons.receipt_long), label: 'Orders'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),

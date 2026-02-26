@@ -1,15 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../config/app_theme.dart';
 import '../../config/app_routes.dart';
 import '../../models/post_model.dart';
+import '../../models/cart_item_model.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/cart_provider.dart';
+import '../../widgets/price_tag.dart';
 import '../../widgets/common/custom_button.dart';
 
 class PostDetailScreen extends StatelessWidget {
   final PostModel post;
 
   const PostDetailScreen({super.key, required this.post});
+
+  void _addToCart(BuildContext context) async {
+    final auth = context.read<AuthProvider>();
+    final cartProv = context.read<CartProvider>();
+    final userId = auth.currentUser?.uid;
+
+    if (userId == null) return;
+
+    final item = CartItemModel(
+      postId: post.id,
+      artistId: post.artistId,
+      artistName: post.artistName,
+      title: post.description.length > 50
+          ? '${post.description.substring(0, 50)}...'
+          : post.description,
+      imageUrl: post.imageUrl,
+      price: post.price,
+    );
+
+    final success = await cartProv.addToCart(userId, item);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(success ? 'Added to cart!' : 'Failed to add to cart'),
+        backgroundColor: success ? AppTheme.successColor : AppTheme.errorColor,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +88,13 @@ class PostDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Price
+                  if (post.price > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: PriceTag(price: post.price, fontSize: 24),
+                    ),
+
                   // Artist Name + Category
                   Row(
                     children: [
@@ -145,11 +187,21 @@ class PostDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
+                  // Add to Cart Button
+                  if (post.price > 0)
+                    CustomButton(
+                      label: 'Add to Cart',
+                      icon: Icons.add_shopping_cart,
+                      color: AppTheme.primary,
+                      onPressed: () => _addToCart(context),
+                    ),
+                  if (post.price > 0) const SizedBox(height: 12),
+
                   // Action Buttons
                   CustomButton(
                     label: 'Rate this Artist',
                     icon: Icons.star,
-                    color: AppTheme.accentGold,
+                    color: AppTheme.accent,
                     onPressed: () {
                       Navigator.pushNamed(
                         context,
