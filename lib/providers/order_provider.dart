@@ -64,7 +64,8 @@ class OrderProvider extends ChangeNotifier {
                 ))
             .toList();
 
-        // Create order
+        // Create order with status=paid, payoutStatus=unpaid
+        // Wallet is NOT credited here — only when delivered
         final order = OrderModel(
           id: '',
           customerId: customerId,
@@ -93,9 +94,6 @@ class OrderProvider extends ChangeNotifier {
           type: AppConstants.paymentTypeOrder,
         );
         await _firestoreService.createPayment(payment);
-
-        // Update artist wallet
-        await _firestoreService.updateWalletBalance(artistId, artistEarnings);
 
         // Notify artist
         await _firestoreService.createNotification(NotificationModel(
@@ -173,6 +171,38 @@ class OrderProvider extends ChangeNotifier {
     try {
       await _firestoreService.updateOrderStatus(orderId, status);
 
+      // Find the order to get details
+      final order = _artistOrders.firstWhere(
+        (o) => o.id == orderId,
+        orElse: () => _customerOrders.firstWhere((o) => o.id == orderId),
+      );
+
+      // Credit artist wallet when order is delivered
+      if (status == AppConstants.orderDelivered) {
+        await _firestoreService.creditWallet(
+          order.artistId,
+          order.artistEarnings,
+        );
+
+        // Notify artist about earnings
+        await _firestoreService.createNotification(NotificationModel(
+          userId: order.artistId,
+          title: 'Earnings Received',
+          message:
+              'You earned \$${order.artistEarnings.toStringAsFixed(2)} from order #${orderId.substring(0, 8).toUpperCase()}.',
+          type: AppConstants.notifPaymentReceived,
+          referenceId: orderId,
+        ));
+      }
+
+      // Reverse wallet earnings on refund
+      if (status == AppConstants.orderRefunded) {
+        await _firestoreService.reverseWalletEarnings(
+          order.artistId,
+          order.artistEarnings,
+        );
+      }
+
       // Update local lists
       _artistOrders = _artistOrders.map((o) {
         if (o.id == orderId) {
@@ -198,12 +228,25 @@ class OrderProvider extends ChangeNotifier {
       }).toList();
 
       // Notify customer about status change
-      final order = _artistOrders.firstWhere((o) => o.id == orderId,
-          orElse: () => _customerOrders.firstWhere((o) => o.id == orderId));
+      final statusLabel = OrderModel(
+        id: '',
+        customerId: '',
+        customerName: '',
+        artistId: '',
+        artistName: '',
+        items: [],
+        totalAmount: 0,
+        platformFee: 0,
+        artistEarnings: 0,
+        status: status,
+        paymentMethod: '',
+      ).statusDisplay;
+
       await _firestoreService.createNotification(NotificationModel(
         userId: order.customerId,
         title: 'Order Updated',
-        message: 'Your order from ${order.artistName} is now ${order.statusDisplay}.',
+        message:
+            'Your order from ${order.artistName} is now $statusLabel.',
         type: AppConstants.notifOrderStatus,
         referenceId: orderId,
       ));

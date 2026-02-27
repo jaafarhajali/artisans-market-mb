@@ -35,12 +35,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         automaticallyImplyLeading: false,
         actions: [
           Consumer<NotificationProvider>(
-            builder: (_, notifProv, __) {
+            builder: (_, notifProv, _) {
               if (notifProv.unreadCount == 0) return const SizedBox.shrink();
               return TextButton(
                 onPressed: () {
-                  final uid =
-                      context.read<AuthProvider>().currentUser?.uid;
+                  final uid = context.read<AuthProvider>().currentUser?.uid;
                   if (uid != null) {
                     notifProv.markAllRead(uid);
                   }
@@ -55,10 +54,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
       body: Consumer<NotificationProvider>(
-        builder: (_, notifProv, __) {
+        builder: (_, notifProv, _) {
           if (notifProv.isLoading) {
-            return const LoadingIndicator(
-                message: 'Loading notifications...');
+            return const LoadingIndicator(message: 'Loading notifications...');
           }
 
           if (notifProv.notifications.isEmpty) {
@@ -71,8 +69,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           return RefreshIndicator(
             color: AppTheme.primary,
             onRefresh: () async {
-              final uid =
-                  context.read<AuthProvider>().currentUser?.uid;
+              final uid = context.read<AuthProvider>().currentUser?.uid;
               if (uid != null) {
                 await notifProv.loadNotifications(uid);
               }
@@ -95,14 +92,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           notification.type == 'order_status') {
                         // Navigate to order detail
                         // We need to load the order first, so navigate to orders
-                        final user =
-                            context.read<AuthProvider>().currentUser;
+                        final user = context.read<AuthProvider>().currentUser;
                         if (user?.role == 'customer') {
                           Navigator.pushNamed(
-                              context, AppRoutes.customerOrders);
+                            context,
+                            AppRoutes.customerOrders,
+                          );
                         } else {
-                          Navigator.pushNamed(
-                              context, AppRoutes.artistOrders);
+                          Navigator.pushNamed(context, AppRoutes.artistOrders);
                         }
                       }
                     }

@@ -21,4 +21,5 @@ class AppRoutes {
   static const String artistOrders = '/artist-orders';
   static const String wallet = '/wallet';
   static const String notifications = '/notifications';
+  static const String artistProfile = '/artist-profile';
 }

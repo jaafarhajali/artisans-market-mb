@@ -28,6 +28,7 @@ import 'screens/customer/customer_home_screen.dart';
 import 'screens/customer/post_detail_screen.dart';
 import 'screens/customer/rate_artist_screen.dart';
 import 'screens/customer/report_post_screen.dart';
+import 'screens/customer/artist_public_profile_screen.dart';
 import 'screens/customer/cart_screen.dart';
 import 'screens/customer/checkout_screen.dart';
 import 'screens/customer/orders_screen.dart';
@@ -169,6 +170,14 @@ class ArtisansMarketApp extends StatelessWidget {
             case AppRoutes.notifications:
               return MaterialPageRoute(
                   builder: (_) => const NotificationsScreen());
+            case AppRoutes.artistProfile:
+              final args = settings.arguments as Map<String, dynamic>;
+              return MaterialPageRoute(
+                builder: (_) => ArtistPublicProfileScreen(
+                  artistId: args['artistId'] as String,
+                  artistName: args['artistName'] as String,
+                ),
+              );
             default:
               return MaterialPageRoute(
                   builder: (_) => const LoginScreen());

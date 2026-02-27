@@ -26,8 +26,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
-    final success =
-        await authProvider.sendPasswordReset(_emailController.text.trim());
+    final success = await authProvider.sendPasswordReset(
+      _emailController.text.trim(),
+    );
 
     if (!mounted) return;
 
@@ -86,8 +87,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                        .hasMatch(value.trim())) {
+                    if (!RegExp(
+                      r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                    ).hasMatch(value.trim())) {
                       return 'Please enter a valid email';
                     }
                     return null;
@@ -95,7 +97,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 24),
                 Consumer<AuthProvider>(
-                  builder: (_, auth, __) => CustomButton(
+                  builder: (_, auth, _) => CustomButton(
                     label: 'Send Reset Link',
                     onPressed: _sendReset,
                     isLoading: auth.isLoading,

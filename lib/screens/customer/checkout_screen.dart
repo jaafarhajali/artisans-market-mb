@@ -5,6 +5,7 @@ import '../../config/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/order_provider.dart';
+import '../../widgets/credit_card_form.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -14,9 +15,12 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  String _selectedMethod = AppConstants.paymentVirtualCard;
+  final _cardFormKey = GlobalKey<FormState>();
+  CreditCardData? _cardData;
 
   Future<void> _placeOrder() async {
+    if (!_cardFormKey.currentState!.validate()) return;
+
     final auth = context.read<AuthProvider>();
     final cartProv = context.read<CartProvider>();
     final orderProv = context.read<OrderProvider>();
@@ -24,11 +28,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final userId = auth.currentUser!.uid;
     final userName = auth.currentUser!.name;
 
+    final paymentMethod = _cardData?.cardType.toLowerCase() ?? 'credit_card';
+
     final orderIds = await orderProv.placeOrder(
       customerId: userId,
       customerName: userName,
       itemsByArtist: cartProv.itemsByArtist,
-      paymentMethod: _selectedMethod,
+      paymentMethod: paymentMethod,
     );
 
     if (!mounted) return;
@@ -42,23 +48,47 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         context: context,
         barrierDismissible: false,
         builder: (_) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Row(
             children: [
               Icon(Icons.check_circle, color: AppTheme.successColor, size: 28),
               SizedBox(width: 8),
-              Text('Order Placed!'),
+              Expanded(child: Text('Payment Successful!')),
             ],
           ),
-          content: Text(
-            '${orderIds.length} order${orderIds.length > 1 ? 's' : ''} placed successfully!\nYou can track your orders in the Orders tab.',
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${orderIds.length} order${orderIds.length > 1 ? 's' : ''} placed successfully!',
+              ),
+              const SizedBox(height: 8),
+              if (_cardData != null)
+                Text(
+                  'Charged to ${_cardData!.cardType} ending in ${_cardData!.maskedNumber.substring(_cardData!.maskedNumber.length - 4)}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Text(
+                'Track your orders in the Orders tab.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Go back from checkout
+                Navigator.pop(context);
+                Navigator.pop(context);
               },
               child: const Text('OK'),
             ),
@@ -70,6 +100,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         SnackBar(
           content: Text(orderProv.error ?? 'Failed to place order'),
           backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     }
@@ -78,9 +110,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF262626),
+        elevation: 0,
+        title: const Text(
+          'Checkout',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
+        ),
+      ),
       body: Consumer<CartProvider>(
-        builder: (_, cartProv, __) {
+        builder: (_, cartProv, _) {
           final itemsByArtist = cartProv.itemsByArtist;
           final subtotal = cartProv.totalAmount;
           final fee = subtotal * AppConstants.platformFeePercent;
@@ -97,137 +138,142 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       final items = entry.value;
                       final artistName = items.first.artistName;
                       final artistSubtotal = items.fold(
-                          0.0, (sum, item) => sum + item.subtotal);
+                        0.0,
+                        (sum, item) => sum + item.subtotal,
+                      );
 
-                      return Card(
+                      return Container(
                         margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                artistName,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFAFAFA),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFEFEFEF)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              artistName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const Divider(),
+                            ...items.map(
+                              (item) => Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${item.title} x${item.quantity}',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                    ),
+                                    Text(
+                                      '\$${item.subtotal.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const Divider(),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                'Subtotal: \$${artistSubtotal.toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 15,
+                                  color: AppTheme.textDark,
                                 ),
                               ),
-                              const Divider(),
-                              ...items.map((item) => Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 4),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            '${item.title} x${item.quantity}',
-                                            style: const TextStyle(
-                                                fontSize: 14),
-                                          ),
-                                        ),
-                                        Text(
-                                          '\$${item.subtotal.toStringAsFixed(2)}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )),
-                              const Divider(),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  'Subtotal: \$${artistSubtotal.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.textDark,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       );
                     }),
 
                     const SizedBox(height: 8),
 
-                    // Payment method
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Payment Method',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
+                    // Credit Card Payment
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAFAFA),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFEFEFEF)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.credit_card, size: 20,
+                                  color: AppTheme.primary),
+                              SizedBox(width: 8),
+                              Text(
+                                'Payment Details',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            RadioListTile<String>(
-                              title: const Text('Virtual Card'),
-                              subtitle:
-                                  const Text('Simulated card payment'),
-                              value: AppConstants.paymentVirtualCard,
-                              groupValue: _selectedMethod,
-                              activeColor: AppTheme.primary,
-                              onChanged: (v) =>
-                                  setState(() => _selectedMethod = v!),
-                            ),
-                            RadioListTile<String>(
-                              title: const Text('Virtual Visa'),
-                              subtitle:
-                                  const Text('Simulated Visa payment'),
-                              value: AppConstants.paymentVirtualVisa,
-                              groupValue: _selectedMethod,
-                              activeColor: AppTheme.primary,
-                              onChanged: (v) =>
-                                  setState(() => _selectedMethod = v!),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          CreditCardForm(
+                            formKey: _cardFormKey,
+                            onCardChanged: (data) {
+                              setState(() => _cardData = data);
+                            },
+                          ),
+                        ],
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
 
                     // Price breakdown
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            _PriceRow(
-                                label: 'Subtotal',
-                                value:
-                                    '\$${subtotal.toStringAsFixed(2)}'),
-                            const SizedBox(height: 8),
-                            _PriceRow(
-                                label: 'Service Fee (10%)',
-                                value:
-                                    '\$${fee.toStringAsFixed(2)}'),
-                            const Divider(height: 20),
-                            _PriceRow(
-                              label: 'Total',
-                              value: '\$${total.toStringAsFixed(2)}',
-                              isBold: true,
-                            ),
-                          ],
-                        ),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAFAFA),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFEFEFEF)),
+                      ),
+                      child: Column(
+                        children: [
+                          _PriceRow(
+                            label: 'Subtotal',
+                            value: '\$${subtotal.toStringAsFixed(2)}',
+                          ),
+                          const SizedBox(height: 8),
+                          _PriceRow(
+                            label: 'Service Fee (10%)',
+                            value: '\$${fee.toStringAsFixed(2)}',
+                          ),
+                          const Divider(height: 20),
+                          _PriceRow(
+                            label: 'Total',
+                            value: '\$${total.toStringAsFixed(2)}',
+                            isBold: true,
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
 
-              // Place order button
+              // Pay button
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -242,11 +288,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 child: SafeArea(
                   child: Consumer<OrderProvider>(
-                    builder: (_, orderProv, __) => SizedBox(
+                    builder: (_, orderProv, _) => SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed:
-                            orderProv.isLoading ? null : _placeOrder,
+                        onPressed: orderProv.isLoading ? null : _placeOrder,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
                         child: orderProv.isLoading
                             ? const SizedBox(
                                 width: 20,
@@ -256,8 +310,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : Text(
-                                'Place Order — \$${total.toStringAsFixed(2)}'),
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.lock_outline, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Pay \$${total.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
                   ),

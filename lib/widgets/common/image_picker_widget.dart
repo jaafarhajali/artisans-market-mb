@@ -61,8 +61,10 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
                 },
               ),
               ListTile(
-                leading:
-                    const Icon(Icons.photo_library, color: AppTheme.primary),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: AppTheme.primary,
+                ),
                 title: const Text('Choose from Gallery'),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -204,12 +206,15 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
           CachedNetworkImage(
             imageUrl: _imageUrl!,
             fit: BoxFit.cover,
-            placeholder: (_, __) => const Center(
+            placeholder: (_, _) => const Center(
               child: CircularProgressIndicator(color: AppTheme.primary),
             ),
-            errorWidget: (_, __, ___) => const Center(
-              child: Icon(Icons.broken_image,
-                  size: 48, color: AppTheme.textLight),
+            errorWidget: (_, _, _) => const Center(
+              child: Icon(
+                Icons.broken_image,
+                size: 48,
+                color: AppTheme.textLight,
+              ),
             ),
           ),
           _buildEditOverlay(),

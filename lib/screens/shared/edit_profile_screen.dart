@@ -71,8 +71,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 },
               ),
               ListTile(
-                leading:
-                    const Icon(Icons.photo_library, color: AppTheme.primary),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: AppTheme.primary,
+                ),
                 title: const Text('Choose from Gallery'),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -100,8 +102,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       final user = context.read<AuthProvider>().currentUser;
       final file = File(picked.path);
-      final url =
-          await _storageService.uploadProfileImage(file, user?.uid ?? '');
+      final url = await _storageService.uploadProfileImage(
+        file,
+        user?.uid ?? '',
+      );
 
       if (!mounted) return;
 
@@ -182,8 +186,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Widget _buildProfileImage() {
     final user = context.read<AuthProvider>().currentUser;
-    final initial =
-        (user?.name.isNotEmpty ?? false) ? user!.name[0].toUpperCase() : '?';
+    final initial = (user?.name.isNotEmpty ?? false)
+        ? user!.name[0].toUpperCase()
+        : '?';
 
     return GestureDetector(
       onTap: _isUploadingImage ? null : _showImageOptions,
@@ -194,8 +199,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             CircleAvatar(
               radius: 52,
               backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
-              child:
-                  const CircularProgressIndicator(color: AppTheme.primary),
+              child: const CircularProgressIndicator(color: AppTheme.primary),
             )
           else if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
             CircleAvatar(
@@ -207,9 +211,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   width: 104,
                   height: 104,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => const CircularProgressIndicator(
-                      color: AppTheme.primary),
-                  errorWidget: (_, __, ___) => Text(
+                  placeholder: (_, _) =>
+                      const CircularProgressIndicator(color: AppTheme.primary),
+                  errorWidget: (_, _, _) => Text(
                     initial,
                     style: const TextStyle(
                       fontSize: 36,
@@ -243,8 +247,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
               ),
-              child:
-                  const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+              child: const Icon(
+                Icons.camera_alt,
+                color: Colors.white,
+                size: 16,
+              ),
             ),
           ),
         ],
@@ -303,17 +310,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               if (isArtist) ...[
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: _selectedCategory,
+                  initialValue: _selectedCategory,
                   decoration: const InputDecoration(
                     labelText: 'Category',
                     prefixIcon: Icon(Icons.category),
                   ),
                   items: AppConstants.categories
-                      .map((cat) =>
-                          DropdownMenuItem(value: cat, child: Text(cat)))
+                      .map(
+                        (cat) => DropdownMenuItem(value: cat, child: Text(cat)),
+                      )
                       .toList(),
-                  onChanged: (val) =>
-                      setState(() => _selectedCategory = val),
+                  onChanged: (val) => setState(() => _selectedCategory = val),
                   validator: (val) =>
                       val == null ? 'Please select a category' : null,
                 ),
@@ -322,7 +329,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: 32),
 
               Consumer<AuthProvider>(
-                builder: (_, auth, __) => CustomButton(
+                builder: (_, auth, _) => CustomButton(
                   label: 'Save Changes',
                   onPressed: _save,
                   isLoading: auth.isLoading,

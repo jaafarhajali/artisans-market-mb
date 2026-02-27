@@ -27,10 +27,12 @@ class _EditPostScreenState extends State<EditPostScreen> {
   @override
   void initState() {
     super.initState();
-    _descriptionController =
-        TextEditingController(text: widget.post.description);
-    _priceController =
-        TextEditingController(text: widget.post.price > 0 ? widget.post.price.toStringAsFixed(2) : '');
+    _descriptionController = TextEditingController(
+      text: widget.post.description,
+    );
+    _priceController = TextEditingController(
+      text: widget.post.price > 0 ? widget.post.price.toStringAsFixed(2) : '',
+    );
     _selectedCategory = widget.post.category;
     _newImageUrl = widget.post.imageUrl;
   }
@@ -62,9 +64,9 @@ class _EditPostScreenState extends State<EditPostScreen> {
     }
 
     final success = await context.read<PostProvider>().updatePost(
-          widget.post.id,
-          data,
-        );
+      widget.post.id,
+      data,
+    );
 
     if (!mounted) return;
 
@@ -117,14 +119,15 @@ class _EditPostScreenState extends State<EditPostScreen> {
               const SizedBox(height: 20),
 
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Category',
                   prefixIcon: Icon(Icons.category),
                 ),
                 items: AppConstants.categories
-                    .map((cat) =>
-                        DropdownMenuItem(value: cat, child: Text(cat)))
+                    .map(
+                      (cat) => DropdownMenuItem(value: cat, child: Text(cat)),
+                    )
                     .toList(),
                 onChanged: (val) => setState(() => _selectedCategory = val),
                 validator: (val) =>
@@ -135,8 +138,9 @@ class _EditPostScreenState extends State<EditPostScreen> {
               // Price
               TextFormField(
                 controller: _priceController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(
                   labelText: 'Price (USD)',
                   prefixIcon: Icon(Icons.attach_money),
@@ -173,7 +177,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
               const SizedBox(height: 24),
 
               Consumer<PostProvider>(
-                builder: (_, prov, __) => CustomButton(
+                builder: (_, prov, _) => CustomButton(
                   label: 'Save Changes',
                   icon: Icons.save,
                   onPressed: _submit,

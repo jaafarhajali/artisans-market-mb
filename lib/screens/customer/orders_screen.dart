@@ -55,7 +55,7 @@ class _OrdersScreenState extends State<OrdersScreen>
         ),
       ),
       body: Consumer<OrderProvider>(
-        builder: (_, orderProv, __) {
+        builder: (_, orderProv, _) {
           if (orderProv.isLoading) {
             return const LoadingIndicator(message: 'Loading orders...');
           }
@@ -65,14 +65,10 @@ class _OrdersScreenState extends State<OrdersScreen>
             children: [
               _buildOrderList(orderProv.customerOrders),
               _buildOrderList(
-                orderProv.customerOrders
-                    .where((o) => o.isActive)
-                    .toList(),
+                orderProv.customerOrders.where((o) => o.isActive).toList(),
               ),
               _buildOrderList(
-                orderProv.customerOrders
-                    .where((o) => o.isDelivered)
-                    .toList(),
+                orderProv.customerOrders.where((o) => o.isDelivered).toList(),
               ),
             ],
           );

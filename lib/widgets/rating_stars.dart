@@ -26,10 +26,7 @@ class RatingStars extends StatelessWidget {
         allowHalfRating: false,
         itemCount: 5,
         itemSize: size,
-        itemBuilder: (_, __) => const Icon(
-          Icons.star,
-          color: AppTheme.accent,
-        ),
+        itemBuilder: (_, _) => const Icon(Icons.star, color: AppTheme.accent),
         unratedColor: AppTheme.borderColor,
         onRatingUpdate: onRatingUpdate ?? (_) {},
       );
@@ -39,10 +36,7 @@ class RatingStars extends StatelessWidget {
       rating: rating,
       itemCount: 5,
       itemSize: size,
-      itemBuilder: (_, __) => const Icon(
-        Icons.star,
-        color: AppTheme.accent,
-      ),
+      itemBuilder: (_, _) => const Icon(Icons.star, color: AppTheme.accent),
       unratedColor: AppTheme.borderColor,
     );
   }

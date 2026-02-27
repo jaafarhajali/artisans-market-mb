@@ -390,7 +390,8 @@ class FirestoreService {
     });
   }
 
-  Future<void> updateWalletBalance(String userId, double amount) async {
+  /// Credits earnings to an artist's wallet (balance + totalEarnings go up).
+  Future<void> creditWallet(String userId, double amount) async {
     final walletRef =
         _db.collection(AppConstants.walletsCollection).doc(userId);
     final doc = await walletRef.get();
@@ -409,6 +410,77 @@ class FirestoreService {
         'lastUpdated': FieldValue.serverTimestamp(),
       });
     }
+  }
+
+  /// Debits from wallet for withdrawals (balance goes down, totalWithdrawn goes up).
+  Future<void> debitWallet(String userId, double amount) async {
+    final walletRef =
+        _db.collection(AppConstants.walletsCollection).doc(userId);
+    final doc = await walletRef.get();
+
+    if (!doc.exists) return;
+
+    await walletRef.update({
+      'balance': FieldValue.increment(-amount),
+      'totalWithdrawn': FieldValue.increment(amount),
+      'lastUpdated': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Reverses earnings on refund (balance + totalEarnings go down).
+  Future<void> reverseWalletEarnings(String userId, double amount) async {
+    final walletRef =
+        _db.collection(AppConstants.walletsCollection).doc(userId);
+    final doc = await walletRef.get();
+
+    if (!doc.exists) return;
+
+    await walletRef.update({
+      'balance': FieldValue.increment(-amount),
+      'totalEarnings': FieldValue.increment(-amount),
+      'lastUpdated': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // ==========================================
+  // PAYOUTS
+  // ==========================================
+
+  Future<String> createPayout(Map<String, dynamic> data) async {
+    final docRef = await _db.collection('payouts').add(data);
+    return docRef.id;
+  }
+
+  Future<List<Map<String, dynamic>>> getArtistPayouts(String artistId) async {
+    final snapshot = await _db
+        .collection('payouts')
+        .where('artistId', isEqualTo: artistId)
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+  }
+
+  Future<void> updateOrderPayoutStatus(
+    String orderId,
+    String payoutStatus, {
+    String? payoutId,
+  }) async {
+    final updates = <String, dynamic>{
+      'payoutStatus': payoutStatus,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (payoutId != null) {
+      updates['payoutId'] = payoutId;
+    }
+    await _db
+        .collection(AppConstants.ordersCollection)
+        .doc(orderId)
+        .update(updates);
   }
 
   // ==========================================

@@ -70,7 +70,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Post limit reached ($currentCount/$limit). Upgrade your plan for more posts.'),
+            'Post limit reached ($currentCount/$limit). Upgrade your plan for more posts.',
+          ),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -126,7 +127,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             children: [
               // Post limit indicator
               Consumer<SubscriptionProvider>(
-                builder: (_, subProv, __) {
+                builder: (_, subProv, _) {
                   if (subProv.isLoading) return const SizedBox.shrink();
                   final plan = subProv.subscription?.planDisplayName ?? 'Free';
                   final limit = subProv.subscription?.postLimit ?? 5;
@@ -140,12 +141,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       color: AppTheme.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: AppTheme.primary.withValues(alpha: 0.3)),
+                        color: AppTheme.primary.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline,
-                            color: AppTheme.primary, size: 20),
+                        const Icon(
+                          Icons.info_outline,
+                          color: AppTheme.primary,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -183,14 +188,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
               // Category
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Category',
                   prefixIcon: Icon(Icons.category),
                 ),
                 items: AppConstants.categories
-                    .map((cat) =>
-                        DropdownMenuItem(value: cat, child: Text(cat)))
+                    .map(
+                      (cat) => DropdownMenuItem(value: cat, child: Text(cat)),
+                    )
                     .toList(),
                 onChanged: (val) => setState(() => _selectedCategory = val),
                 validator: (val) =>
@@ -201,8 +207,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               // Price
               TextFormField(
                 controller: _priceController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(
                   labelText: 'Price (USD)',
                   prefixIcon: Icon(Icons.attach_money),
@@ -241,7 +248,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
               // Submit
               Consumer<PostProvider>(
-                builder: (_, prov, __) => CustomButton(
+                builder: (_, prov, _) => CustomButton(
                   label: 'Create Post',
                   icon: Icons.publish,
                   onPressed: _submit,

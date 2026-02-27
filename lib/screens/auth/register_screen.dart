@@ -173,8 +173,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                        .hasMatch(value.trim())) {
+                    if (!RegExp(
+                      r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                    ).hasMatch(value.trim())) {
                       return 'Please enter a valid email';
                     }
                     return null;
@@ -220,9 +221,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirm
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                      _obscureConfirm ? Icons.visibility_off : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() => _obscureConfirm = !_obscureConfirm);
@@ -241,19 +240,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 if (_selectedRole == AppConstants.roleArtist) ...[
                   const Text(
                     'Category',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     decoration: const InputDecoration(
                       hintText: 'Select your art category',
                       prefixIcon: Icon(Icons.category_outlined),
                     ),
                     items: AppConstants.categories
-                        .map((cat) =>
-                            DropdownMenuItem(value: cat, child: Text(cat)))
+                        .map(
+                          (cat) =>
+                              DropdownMenuItem(value: cat, child: Text(cat)),
+                        )
                         .toList(),
                     onChanged: (value) {
                       setState(() => _selectedCategory = value);
@@ -273,7 +273,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // Register Button
                 Consumer<AuthProvider>(
-                  builder: (_, auth, __) => CustomButton(
+                  builder: (_, auth, _) => CustomButton(
                     label: 'Create Account',
                     onPressed: _register,
                     isLoading: auth.isLoading,
@@ -292,7 +292,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     GestureDetector(
                       onTap: () {
                         Navigator.pushReplacementNamed(
-                            context, AppRoutes.login);
+                          context,
+                          AppRoutes.login,
+                        );
                       },
                       child: const Text(
                         'Sign In',

@@ -17,7 +17,7 @@ class CartScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('My Cart')),
       body: Consumer<CartProvider>(
-        builder: (_, cartProv, __) {
+        builder: (_, cartProv, _) {
           if (cartProv.cartItems.isEmpty) {
             return const EmptyState(
               icon: Icons.shopping_cart_outlined,
@@ -47,20 +47,21 @@ class CartScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        ...entry.value.map((item) => CartItemCard(
-                              item: item,
-                              onRemove: () {
-                                if (userId != null) {
-                                  cartProv.removeItem(userId, item.id);
-                                }
-                              },
-                              onQuantityChanged: (qty) {
-                                if (userId != null) {
-                                  cartProv.updateQuantity(
-                                      userId, item.id, qty);
-                                }
-                              },
-                            )),
+                        ...entry.value.map(
+                          (item) => CartItemCard(
+                            item: item,
+                            onRemove: () {
+                              if (userId != null) {
+                                cartProv.removeItem(userId, item.id);
+                              }
+                            },
+                            onQuantityChanged: (qty) {
+                              if (userId != null) {
+                                cartProv.updateQuantity(userId, item.id, qty);
+                              }
+                            },
+                          ),
+                        ),
                       ],
                     );
                   }).toList(),

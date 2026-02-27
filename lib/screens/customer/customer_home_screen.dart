@@ -8,7 +8,6 @@ import '../../providers/post_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../widgets/post_card.dart';
-import '../../widgets/category_chip.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/empty_state.dart';
 import '../../screens/shared/profile_screen.dart';
@@ -56,46 +55,100 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
-        items: [
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Consumer<CartProvider>(
-              builder: (_, cartProv, child) {
-                final count = cartProv.itemCount;
-                if (count == 0) return child!;
-                return Badge(
-                  label: Text('$count'),
-                  child: child,
-                );
-              },
-              child: const Icon(Icons.shopping_cart),
-            ),
-            label: 'Cart',
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Color(0xFFEFEFEF), width: 0.5),
           ),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long), label: 'Orders'),
-          BottomNavigationBarItem(
-            icon: Consumer<NotificationProvider>(
-              builder: (_, notifProv, child) {
-                final count = notifProv.unreadCount;
-                if (count == 0) return child!;
-                return Badge(
-                  label: Text('$count'),
-                  child: child,
-                );
-              },
-              child: const Icon(Icons.notifications),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (i) => setState(() => _currentIndex = i),
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          selectedItemColor: AppTheme.primary,
+          unselectedItemColor: const Color(0xFF8E8E8E),
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(
+                _currentIndex == 0
+                    ? Icons.storefront_rounded
+                    : Icons.storefront_outlined,
+                size: 26,
+              ),
+              label: 'Market',
             ),
-            label: 'Alerts',
-          ),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.person), label: 'Profile'),
-        ],
+            BottomNavigationBarItem(
+              icon: Consumer<CartProvider>(
+                builder: (_, cartProv, child) {
+                  final count = cartProv.itemCount;
+                  final icon = Icon(
+                    _currentIndex == 1
+                        ? Icons.palette_rounded
+                        : Icons.palette_outlined,
+                    size: 26,
+                  );
+                  if (count == 0) return icon;
+                  return Badge(
+                    label: Text(
+                      '$count',
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                    child: icon,
+                  );
+                },
+              ),
+              label: 'Cart',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                _currentIndex == 2
+                    ? Icons.local_shipping_rounded
+                    : Icons.local_shipping_outlined,
+                size: 26,
+              ),
+              label: 'Orders',
+            ),
+            BottomNavigationBarItem(
+              icon: Consumer<NotificationProvider>(
+                builder: (_, notifProv, child) {
+                  final count = notifProv.unreadCount;
+                  final icon = Icon(
+                    _currentIndex == 3
+                        ? Icons.notifications_rounded
+                        : Icons.notifications_outlined,
+                    size: 26,
+                  );
+                  if (count == 0) return icon;
+                  return Badge(
+                    label: Text(
+                      '$count',
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                    child: icon,
+                  );
+                },
+              ),
+              label: 'Alerts',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                _currentIndex == 4
+                    ? Icons.account_circle_rounded
+                    : Icons.account_circle_outlined,
+                size: 26,
+              ),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -104,85 +157,150 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     return SafeArea(
       child: Column(
         children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          // ── App Header ──
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Row(
               children: [
-                const Expanded(
-                  child: Text(
-                    'Artisans Market',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textDark,
+                // Brand icon
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: AppTheme.brandGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.palette_rounded,
+                    color: Colors.white,
+                    size: 18,
                   ),
                 ),
-                Consumer<AuthProvider>(
-                  builder: (_, auth, __) => Text(
-                    'Hi, ${auth.currentUser?.name.split(' ').first ?? 'there'}!',
-                    style: const TextStyle(
-                      color: AppTheme.textLight,
-                      fontSize: 14,
-                    ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Artisans Market',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF262626),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => setState(() => _currentIndex = 3),
+                  child: Consumer<NotificationProvider>(
+                    builder: (_, notifProv, _) {
+                      final count = notifProv.unreadCount;
+                      return count > 0
+                          ? Badge(
+                              label: Text(
+                                '$count',
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                              child: const Icon(
+                                Icons.notifications_outlined,
+                                size: 26,
+                                color: Color(0xFF262626),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.notifications_outlined,
+                              size: 26,
+                              color: Color(0xFF262626),
+                            );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 14),
+                GestureDetector(
+                  onTap: () => setState(() => _currentIndex = 1),
+                  child: Consumer<CartProvider>(
+                    builder: (_, cartProv, _) {
+                      final count = cartProv.itemCount;
+                      return count > 0
+                          ? Badge(
+                              label: Text(
+                                '$count',
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                              child: const Icon(
+                                Icons.shopping_cart_outlined,
+                                size: 26,
+                                color: Color(0xFF262626),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 26,
+                              color: Color(0xFF262626),
+                            );
+                    },
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
 
-          // Category Chips
+          const SizedBox(height: 12),
+
+          // ── Category Chips (circle style) ──
           SizedBox(
-            height: 40,
+            height: 80,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               children: [
-                CategoryChip(
-                  label: 'All',
-                  isSelected: _selectedCategory == null,
-                  onTap: () => _onCategorySelected(null),
+                _buildStoryChip(
+                  'All',
+                  Icons.apps_rounded,
+                  _selectedCategory == null,
+                  () => _onCategorySelected(null),
                 ),
-                const SizedBox(width: 8),
                 ...AppConstants.categories.map(
-                  (cat) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: CategoryChip(
-                      label: cat,
-                      isSelected: _selectedCategory == cat,
-                      onTap: () => _onCategorySelected(cat),
-                    ),
+                  (cat) => _buildStoryChip(
+                    cat,
+                    _getCategoryIcon(cat),
+                    _selectedCategory == cat,
+                    () => _onCategorySelected(cat),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
 
-          // Posts List
+          const Divider(
+            height: 1,
+            thickness: 0.5,
+            color: Color(0xFFEFEFEF),
+          ),
+
+          // ── Posts Feed ──
           Expanded(
             child: Consumer<PostProvider>(
-              builder: (_, postProv, __) {
+              builder: (_, postProv, _) {
                 if (postProv.isLoading) {
                   return const LoadingIndicator(message: 'Loading posts...');
                 }
 
                 if (postProv.posts.isEmpty) {
                   return const EmptyState(
-                    icon: Icons.art_track,
-                    message: 'No posts found.\nCheck back later!',
+                    icon: Icons.palette_outlined,
+                    message: 'No artwork found.\nCheck back later!',
                   );
                 }
 
                 return RefreshIndicator(
                   color: AppTheme.primary,
-                  onRefresh: () => postProv.loadActivePosts(
-                    category: _selectedCategory,
-                  ),
+                  onRefresh: () =>
+                      postProv.loadActivePosts(category: _selectedCategory),
                   child: ListView.builder(
                     itemCount: postProv.posts.length,
+                    padding: EdgeInsets.zero,
                     itemBuilder: (_, i) {
                       final post = postProv.posts[i];
                       return PostCard(
@@ -192,6 +310,16 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             context,
                             AppRoutes.postDetail,
                             arguments: post,
+                          );
+                        },
+                        onArtistTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.artistProfile,
+                            arguments: {
+                              'artistId': post.artistId,
+                              'artistName': post.artistName,
+                            },
                           );
                         },
                       );
@@ -204,5 +332,88 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildStoryChip(
+    String label,
+    IconData icon,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: isSelected
+                    ? const LinearGradient(
+                        colors: AppTheme.brandGradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                border: isSelected
+                    ? null
+                    : Border.all(color: const Color(0xFFDBDBDB), width: 2),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                ),
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: isSelected
+                      ? AppTheme.primary.withValues(alpha: 0.1)
+                      : const Color(0xFFF5F5F5),
+                  child: Icon(
+                    icon,
+                    size: 22,
+                    color: isSelected
+                        ? AppTheme.primary
+                        : const Color(0xFF8E8E8E),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label.length > 8 ? '${label.substring(0, 7)}.' : label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected
+                    ? const Color(0xFF262626)
+                    : const Color(0xFF8E8E8E),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Painting':
+        return Icons.brush_rounded;
+      case 'Sculpture':
+        return Icons.architecture_rounded;
+      case 'Photography':
+        return Icons.camera_alt_rounded;
+      case 'Digital Art':
+        return Icons.desktop_mac_rounded;
+      case 'Crafts':
+        return Icons.handyman_rounded;
+      default:
+        return Icons.category_rounded;
+    }
   }
 }

@@ -9,7 +9,9 @@ class PostProvider extends ChangeNotifier {
 
   List<PostModel> _posts = [];
   List<PostModel> _myPosts = [];
+  List<PostModel> _artistProfilePosts = [];
   bool _isLoading = false;
+  bool _isLoadingProfile = false;
   String? _error;
   String? _selectedCategory;
 
@@ -17,7 +19,9 @@ class PostProvider extends ChangeNotifier {
 
   List<PostModel> get posts => _posts;
   List<PostModel> get myPosts => _myPosts;
+  List<PostModel> get artistProfilePosts => _artistProfilePosts;
   bool get isLoading => _isLoading;
+  bool get isLoadingProfile => _isLoadingProfile;
   String? get error => _error;
   String? get selectedCategory => _selectedCategory;
 
@@ -54,6 +58,27 @@ class PostProvider extends ChangeNotifier {
     } catch (e) {
       _error = 'Failed to load your posts.';
       _setLoading(false);
+    }
+  }
+
+  /// Load posts for an artist's profile (separate from myPosts to avoid conflicts).
+  /// If [activeOnly] is true, only active posts are returned.
+  Future<void> loadArtistProfilePosts(String artistId,
+      {bool activeOnly = true}) async {
+    _isLoadingProfile = true;
+    notifyListeners();
+    _error = null;
+
+    try {
+      final allPosts = await _firestoreService.getArtistPosts(artistId);
+      _artistProfilePosts =
+          activeOnly ? allPosts.where((p) => p.isActive).toList() : allPosts;
+      _isLoadingProfile = false;
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to load artist posts.';
+      _isLoadingProfile = false;
+      notifyListeners();
     }
   }
 

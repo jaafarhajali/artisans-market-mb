@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/post_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../widgets/subscription_badge.dart';
+import '../../widgets/credit_card_form.dart';
 import '../../widgets/common/loading_indicator.dart';
 
 class SubscriptionScreen extends StatefulWidget {
@@ -36,7 +37,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     }
   }
 
-  Future<void> _subscribeToPlan(String planKey, Map<String, dynamic> plan) async {
+  Future<void> _subscribeToPlan(
+    String planKey,
+    Map<String, dynamic> plan,
+  ) async {
     final auth = context.read<AuthProvider>();
     final user = auth.currentUser;
     if (user == null) return;
@@ -44,71 +48,110 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     final planName = plan['name'] as String;
     final amount = plan['amount'] as double;
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Subscribe to $planName'),
-        content: Text(
-          amount == 0
-              ? 'Switch to the Free plan?'
-              : 'Subscribe to $planName for \$${amount.toStringAsFixed(2)}/month?\n\nYour plan will be active for 30 days.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
+    // Free plan: just confirm
+    if (amount == 0) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Switch to $planName'),
+          content: const Text('Switch to the Free plan?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
             ),
-            child: const Text('Confirm'),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Confirm'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true || !mounted) return;
+
+      final success =
+          await context.read<SubscriptionProvider>().subscribeToPlan(
+                artistId: user.uid,
+                artistName: user.name,
+                artistEmail: user.email,
+                planKey: planKey,
+                amount: amount,
+                postLimit: plan['postLimit'] as int,
+              );
+
+      if (!mounted) return;
+      _showResult(success, planName);
+      return;
+    }
+
+    // Paid plan: show card payment bottom sheet
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _PaymentSheet(
+        planName: planName,
+        amount: amount,
       ),
     );
 
-    if (confirm != true || !mounted) return;
+    if (result != true || !mounted) return;
 
-    final success = await context.read<SubscriptionProvider>().subscribeToPlan(
-      artistId: user.uid,
-      artistName: user.name,
-      artistEmail: user.email,
-      planKey: planKey,
-      amount: amount,
-      postLimit: plan['postLimit'] as int,
-    );
+    final success =
+        await context.read<SubscriptionProvider>().subscribeToPlan(
+              artistId: user.uid,
+              artistName: user.name,
+              artistEmail: user.email,
+              planKey: planKey,
+              amount: amount,
+              postLimit: plan['postLimit'] as int,
+            );
 
     if (!mounted) return;
+    _showResult(success, planName);
+  }
 
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Subscribed to $planName!'),
-          backgroundColor: AppTheme.successColor,
+  void _showResult(bool success, String planName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Subscribed to $planName!'
+              : 'Failed to subscribe. Please try again.',
         ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to subscribe. Please try again.'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
-    }
+        backgroundColor: success ? AppTheme.successColor : AppTheme.errorColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Subscription')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF262626),
+        elevation: 0,
+        title: const Text(
+          'My Subscription',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
+        ),
+      ),
       body: Consumer<SubscriptionProvider>(
-        builder: (_, subProv, __) {
+        builder: (_, subProv, _) {
           if (subProv.isLoading) {
-            return const LoadingIndicator(
-                message: 'Loading subscription...');
+            return const LoadingIndicator(message: 'Loading subscription...');
           }
 
           final sub = subProv.subscription;
@@ -158,8 +201,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       // Post usage
                       Row(
                         children: [
-                          const Icon(Icons.article,
-                              color: AppTheme.primary, size: 20),
+                          const Icon(
+                            Icons.article,
+                            color: AppTheme.primary,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             isUnlimited
@@ -195,8 +241,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                         if (sub.expiryDate != null)
                           Row(
                             children: [
-                              const Icon(Icons.calendar_today,
-                                  color: AppTheme.textLight, size: 16),
+                              const Icon(
+                                Icons.calendar_today,
+                                color: AppTheme.textLight,
+                                size: 16,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 'Expires: ${DateFormat.yMMMd().format(sub.expiryDate!)}',
@@ -211,9 +260,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                         Row(
                           children: [
                             Icon(
-                              sub.isActive
-                                  ? Icons.check_circle
-                                  : Icons.cancel,
+                              sub.isActive ? Icons.check_circle : Icons.cancel,
                               color: sub.isActive
                                   ? AppTheme.successColor
                                   : AppTheme.errorColor,
@@ -254,8 +301,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 ...AppConstants.plans.entries.map((entry) {
                   final key = entry.key;
                   final plan = entry.value;
-                  final isCurrent =
-                      key == (sub?.plan ?? 'free');
+                  final isCurrent = key == (sub?.plan ?? 'free');
+                  final isPaid = (plan['amount'] as double) > 0;
 
                   return Container(
                     width: double.infinity,
@@ -298,7 +345,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                         const SizedBox(width: 8),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 2),
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: AppTheme.primary,
                                             borderRadius:
@@ -330,7 +379,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                               ),
                             ),
                             Text(
-                              (plan['amount'] as double) == 0
+                              !isPaid
                                   ? 'Free'
                                   : '\$${(plan['amount'] as double).toStringAsFixed(2)}/mo',
                               style: TextStyle(
@@ -347,24 +396,29 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
-                            child: ElevatedButton(
+                            child: ElevatedButton.icon(
                               onPressed: subProv.isLoading
                                   ? null
                                   : () => _subscribeToPlan(key, plan),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: Text(
-                                key == 'free' ? 'Switch to Free' : 'Subscribe',
+                              icon: isPaid
+                                  ? const Icon(Icons.credit_card, size: 18)
+                                  : const Icon(Icons.swap_horiz, size: 18),
+                              label: Text(
+                                isPaid ? 'Subscribe & Pay' : 'Switch to Free',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
                                 ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primary,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                elevation: 0,
                               ),
                             ),
                           ),
@@ -377,6 +431,150 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Bottom sheet with card form for paid subscription
+class _PaymentSheet extends StatefulWidget {
+  final String planName;
+  final double amount;
+
+  const _PaymentSheet({required this.planName, required this.amount});
+
+  @override
+  State<_PaymentSheet> createState() => _PaymentSheetState();
+}
+
+class _PaymentSheetState extends State<_PaymentSheet> {
+  final _cardFormKey = GlobalKey<FormState>();
+  bool _isProcessing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Header
+                Row(
+                  children: [
+                    const Icon(Icons.credit_card, color: AppTheme.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Subscribe to ${widget.planName}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                            ),
+                          ),
+                          Text(
+                            '\$${widget.amount.toStringAsFixed(2)}/month',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Card form
+                CreditCardForm(
+                  formKey: _cardFormKey,
+                  onCardChanged: (_) {},
+                ),
+                const SizedBox(height: 20),
+
+                // Pay button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isProcessing
+                        ? null
+                        : () async {
+                            if (!_cardFormKey.currentState!.validate()) return;
+
+                            setState(() => _isProcessing = true);
+
+                            // Simulate payment processing
+                            await Future.delayed(
+                                const Duration(milliseconds: 800));
+
+                            if (mounted) {
+                              Navigator.pop(context, true);
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: _isProcessing
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.lock_outline, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Pay \$${widget.amount.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                Text(
+                  'Your card will be charged \$${widget.amount.toStringAsFixed(2)}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

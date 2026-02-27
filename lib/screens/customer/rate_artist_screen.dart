@@ -39,9 +39,10 @@ class _RateArtistScreenState extends State<RateArtistScreen> {
     final customerId = context.read<AuthProvider>().currentUser?.uid;
     if (customerId == null) return;
 
-    final existing = await context
-        .read<RatingProvider>()
-        .getExistingRating(customerId, widget.artistId);
+    final existing = await context.read<RatingProvider>().getExistingRating(
+      customerId,
+      widget.artistId,
+    );
 
     if (mounted) {
       setState(() {
@@ -74,21 +75,21 @@ class _RateArtistScreenState extends State<RateArtistScreen> {
 
     final customerId = context.read<AuthProvider>().currentUser!.uid;
     final success = await context.read<RatingProvider>().submitRating(
-          artistId: widget.artistId,
-          customerId: customerId,
-          stars: _rating.toInt(),
-          feedback: _feedbackController.text.trim(),
-          existingRatingId: _existingRating?.id,
-        );
+      artistId: widget.artistId,
+      customerId: customerId,
+      stars: _rating.toInt(),
+      feedback: _feedbackController.text.trim(),
+      existingRatingId: _existingRating?.id,
+    );
 
     if (!mounted) return;
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_existingRating != null
-              ? 'Rating updated!'
-              : 'Rating submitted!'),
+          content: Text(
+            _existingRating != null ? 'Rating updated!' : 'Rating submitted!',
+          ),
           backgroundColor: AppTheme.successColor,
         ),
       );
@@ -184,7 +185,7 @@ class _RateArtistScreenState extends State<RateArtistScreen> {
                   const SizedBox(height: 24),
 
                   Consumer<RatingProvider>(
-                    builder: (_, prov, __) => CustomButton(
+                    builder: (_, prov, _) => CustomButton(
                       label: _existingRating != null
                           ? 'Update Rating'
                           : 'Submit Rating',

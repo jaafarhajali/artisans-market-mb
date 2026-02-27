@@ -30,10 +30,10 @@ class _ReportPostScreenState extends State<ReportPostScreen> {
 
     final reporterId = context.read<AuthProvider>().currentUser!.uid;
     final success = await context.read<ReportProvider>().submitReport(
-          postId: widget.postId,
-          reporterId: reporterId,
-          reason: _reasonController.text.trim(),
-        );
+      postId: widget.postId,
+      reporterId: reporterId,
+      reason: _reasonController.text.trim(),
+    );
 
     if (!mounted) return;
 
@@ -100,7 +100,7 @@ class _ReportPostScreenState extends State<ReportPostScreen> {
               ),
               const SizedBox(height: 24),
               Consumer<ReportProvider>(
-                builder: (_, prov, __) => CustomButton(
+                builder: (_, prov, _) => CustomButton(
                   label: 'Submit Report',
                   onPressed: _submit,
                   isLoading: prov.isLoading,

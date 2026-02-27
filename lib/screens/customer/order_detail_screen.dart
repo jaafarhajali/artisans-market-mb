@@ -38,8 +38,9 @@ class OrderDetailScreen extends StatelessWidget {
                         ),
                         Text(
                           order.createdAt != null
-                              ? DateFormat('MMM d, yyyy h:mm a')
-                                  .format(order.createdAt!)
+                              ? DateFormat(
+                                  'MMM d, yyyy h:mm a',
+                                ).format(order.createdAt!)
                               : '',
                           style: const TextStyle(
                             fontSize: 12,
@@ -108,65 +109,68 @@ class OrderDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ...order.items.map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: CachedNetworkImage(
-                                  imageUrl: item.imageUrl,
+                    ...order.items.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: CachedNetworkImage(
+                                imageUrl: item.imageUrl,
+                                width: 56,
+                                height: 56,
+                                fit: BoxFit.cover,
+                                placeholder: (_, _) => Container(
                                   width: 56,
                                   height: 56,
-                                  fit: BoxFit.cover,
-                                  placeholder: (_, __) => Container(
-                                    width: 56,
-                                    height: 56,
-                                    color: AppTheme.borderColor,
-                                  ),
-                                  errorWidget: (_, __, ___) => Container(
-                                    width: 56,
-                                    height: 56,
-                                    color: AppTheme.borderColor,
-                                    child: const Icon(Icons.image,
-                                        size: 24,
-                                        color: AppTheme.textLight),
+                                  color: AppTheme.borderColor,
+                                ),
+                                errorWidget: (_, _, _) => Container(
+                                  width: 56,
+                                  height: 56,
+                                  color: AppTheme.borderColor,
+                                  child: const Icon(
+                                    Icons.image,
+                                    size: 24,
+                                    color: AppTheme.textLight,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                      ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
                                     ),
-                                    Text(
-                                      'Qty: ${item.quantity}',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppTheme.textLight,
-                                      ),
+                                  ),
+                                  Text(
+                                    'Qty: ${item.quantity}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.textLight,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                '\$${item.subtotal.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primary,
-                                ),
+                            ),
+                            Text(
+                              '\$${item.subtotal.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primary,
                               ),
-                            ],
-                          ),
-                        )),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -189,21 +193,20 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _InfoRow(
-                        label: 'Payment Method',
-                        value: order.paymentMethod == 'virtual_card'
-                            ? 'Virtual Card'
-                            : 'Virtual Visa'),
+                      label: 'Payment Method',
+                      value: order.paymentMethod == 'virtual_card'
+                          ? 'Virtual Card'
+                          : 'Virtual Visa',
+                    ),
                     const SizedBox(height: 6),
                     _InfoRow(
                       label: 'Subtotal',
-                      value:
-                          '\$${order.totalAmount.toStringAsFixed(2)}',
+                      value: '\$${order.totalAmount.toStringAsFixed(2)}',
                     ),
                     const SizedBox(height: 6),
                     _InfoRow(
                       label: 'Platform Fee',
-                      value:
-                          '\$${order.platformFee.toStringAsFixed(2)}',
+                      value: '\$${order.platformFee.toStringAsFixed(2)}',
                     ),
                     const Divider(height: 16),
                     _InfoRow(

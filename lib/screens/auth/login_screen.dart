@@ -113,8 +113,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                        .hasMatch(value.trim())) {
+                    if (!RegExp(
+                      r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                    ).hasMatch(value.trim())) {
                       return 'Please enter a valid email';
                     }
                     return null;
@@ -168,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Login Button
                 Consumer<AuthProvider>(
-                  builder: (_, auth, __) => CustomButton(
+                  builder: (_, auth, _) => CustomButton(
                     label: 'Sign In',
                     onPressed: _login,
                     isLoading: auth.isLoading,
@@ -187,7 +188,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     GestureDetector(
                       onTap: () {
                         Navigator.pushReplacementNamed(
-                            context, AppRoutes.register);
+                          context,
+                          AppRoutes.register,
+                        );
                       },
                       child: const Text(
                         'Register',

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart';
 import '../config/app_theme.dart';
 import '../models/post_model.dart';
-import 'price_tag.dart';
 
 class PostCard extends StatelessWidget {
   final PostModel post;
   final VoidCallback? onTap;
+  final VoidCallback? onArtistTap;
   final bool showStatus;
   final Widget? trailing;
 
@@ -15,133 +14,253 @@ class PostCard extends StatelessWidget {
     super.key,
     required this.post,
     this.onTap,
+    this.onArtistTap,
     this.showStatus = false,
     this.trailing,
   });
 
+  String _timeAgo(DateTime? date) {
+    if (date == null) return '';
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays > 365) return '${(diff.inDays / 365).floor()}y ago';
+    if (diff.inDays > 30) return '${(diff.inDays / 30).floor()}mo ago';
+    if (diff.inDays > 7) return '${(diff.inDays / 7).floor()}w ago';
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
+    return 'Just now';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
-              child: SizedBox(
-                height: 180,
-                width: double.infinity,
+    return Container(
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header: Avatar + Artist Name + Category + Time ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                // Brand gradient-bordered avatar
+                GestureDetector(
+                  onTap: onArtistTap,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: AppTheme.brandGradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                      child: CircleAvatar(
+                        radius: 16,
+                        backgroundColor:
+                            AppTheme.primary.withValues(alpha: 0.12),
+                        child: Text(
+                          post.artistName.isNotEmpty
+                              ? post.artistName[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onArtistTap,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          post.artistName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: AppTheme.textDark,
+                          ),
+                        ),
+                        Text(
+                          post.category,
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (showStatus) ...[
+                  _buildStatusBadge(post.status),
+                  const SizedBox(width: 8),
+                ],
+                if (trailing != null) trailing!,
+              ],
+            ),
+          ),
+
+          // ── Image ── full width, tappable
+          GestureDetector(
+            onTap: onTap,
+            child: SizedBox(
+              width: double.infinity,
+              child: AspectRatio(
+                aspectRatio: 1,
                 child: post.imageUrl.isNotEmpty
                     ? CachedNetworkImage(
                         imageUrl: post.imageUrl,
                         fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(
-                          color: AppTheme.background,
+                        placeholder: (_, _) => Container(
+                          color: const Color(0xFFF5F5F5),
                           child: const Center(
                             child: CircularProgressIndicator(
-                                color: AppTheme.primary),
+                              color: AppTheme.primary,
+                              strokeWidth: 2,
+                            ),
                           ),
                         ),
-                        errorWidget: (_, __, ___) => Container(
-                          color: AppTheme.background,
+                        errorWidget: (_, _, _) => Container(
+                          color: const Color(0xFFF5F5F5),
                           child: const Icon(
-                            Icons.image_not_supported,
+                            Icons.image_not_supported_outlined,
                             size: 48,
-                            color: AppTheme.textLight,
+                            color: Color(0xFFBDBDBD),
                           ),
                         ),
                       )
                     : Container(
-                        color: AppTheme.background,
+                        color: const Color(0xFFF5F5F5),
                         child: const Icon(
-                          Icons.image,
+                          Icons.image_outlined,
                           size: 48,
-                          color: AppTheme.textLight,
+                          color: Color(0xFFBDBDBD),
                         ),
                       ),
               ),
             ),
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+
+          // ── Action Row: Appreciate / Rate / Bookmark + Price ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                // Appreciate (sparkle icon - admire the art)
+                GestureDetector(
+                  onTap: onTap,
+                  child: const Icon(
+                    Icons.auto_awesome_outlined,
+                    size: 26,
+                    color: Color(0xFF262626),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Rate (star icon - rate the artist)
+                GestureDetector(
+                  onTap: onTap,
+                  child: const Icon(
+                    Icons.star_outline_rounded,
+                    size: 26,
+                    color: Color(0xFF262626),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Bookmark / Collect (save the art)
+                GestureDetector(
+                  onTap: onTap,
+                  child: const Icon(
+                    Icons.bookmark_border_rounded,
+                    size: 26,
+                    color: Color(0xFF262626),
+                  ),
+                ),
+                const Spacer(),
+                if (post.price > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: AppTheme.brandGradient,
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      '\$${post.price.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // ── Description ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: RichText(
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              text: TextSpan(
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF262626),
+                ),
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          post.artistName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: AppTheme.textDark,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          post.category,
-                          style: const TextStyle(
-                            color: AppTheme.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                  TextSpan(
+                    text: post.artistName,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    post.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  const TextSpan(text: '  '),
+                  TextSpan(
+                    text: post.description,
                     style: const TextStyle(
-                        color: AppTheme.textLight, fontSize: 14),
-                  ),
-                  if (post.price > 0) ...[
-                    const SizedBox(height: 6),
-                    PriceTag(price: post.price, fontSize: 15),
-                  ],
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      if (showStatus) ...[
-                        _buildStatusBadge(post.status),
-                        const SizedBox(width: 8),
-                      ],
-                      Icon(Icons.access_time,
-                          size: 14, color: AppTheme.textLight),
-                      const SizedBox(width: 4),
-                      Text(
-                        post.createdAt != null
-                            ? DateFormat.yMMMd().format(post.createdAt!)
-                            : 'N/A',
-                        style: const TextStyle(
-                            color: AppTheme.textLight, fontSize: 12),
-                      ),
-                      if (trailing != null) ...[
-                        const Spacer(),
-                        trailing!,
-                      ],
-                    ],
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+
+          // ── Time ago ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+            child: Text(
+              _timeAgo(post.createdAt),
+              style: TextStyle(
+                color: Colors.grey[500],
+                fontSize: 12,
+              ),
+            ),
+          ),
+
+          // Thin divider
+          const Divider(height: 1, thickness: 0.5, color: Color(0xFFEFEFEF)),
+        ],
       ),
     );
   }
@@ -168,15 +287,18 @@ class PostCard extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         status,
-        style:
-            TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

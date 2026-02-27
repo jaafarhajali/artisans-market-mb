@@ -61,7 +61,7 @@ class _ArtistOrdersScreenState extends State<ArtistOrdersScreen>
         ),
       ),
       body: Consumer<OrderProvider>(
-        builder: (_, orderProv, __) {
+        builder: (_, orderProv, _) {
           if (orderProv.isLoading) {
             return const LoadingIndicator(message: 'Loading orders...');
           }
@@ -71,27 +71,19 @@ class _ArtistOrdersScreenState extends State<ArtistOrdersScreen>
             children: [
               _buildOrderList(orderProv.artistOrders, orderProv),
               _buildOrderList(
-                orderProv.artistOrders
-                    .where((o) => o.isPaid)
-                    .toList(),
+                orderProv.artistOrders.where((o) => o.isPaid).toList(),
                 orderProv,
               ),
               _buildOrderList(
-                orderProv.artistOrders
-                    .where((o) => o.isProcessing)
-                    .toList(),
+                orderProv.artistOrders.where((o) => o.isProcessing).toList(),
                 orderProv,
               ),
               _buildOrderList(
-                orderProv.artistOrders
-                    .where((o) => o.isShipped)
-                    .toList(),
+                orderProv.artistOrders.where((o) => o.isShipped).toList(),
                 orderProv,
               ),
               _buildOrderList(
-                orderProv.artistOrders
-                    .where((o) => o.isDelivered)
-                    .toList(),
+                orderProv.artistOrders.where((o) => o.isDelivered).toList(),
                 orderProv,
               ),
             ],
@@ -138,8 +130,10 @@ class _ArtistOrdersScreenState extends State<ArtistOrdersScreen>
               // Status update buttons
               if (order.isActive && !order.isPending)
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 4,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [

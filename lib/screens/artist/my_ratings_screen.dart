@@ -59,7 +59,7 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                 RatingStars(rating: avgRating, size: 28),
                 const SizedBox(height: 8),
                 Consumer<RatingProvider>(
-                  builder: (_, prov, __) => Text(
+                  builder: (_, prov, _) => Text(
                     '${prov.artistRatings.length} ${prov.artistRatings.length == 1 ? 'review' : 'reviews'}',
                     style: const TextStyle(
                       color: AppTheme.textLight,
@@ -75,7 +75,7 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
           // Individual ratings
           Expanded(
             child: Consumer<RatingProvider>(
-              builder: (_, prov, __) {
+              builder: (_, prov, _) {
                 if (prov.isLoading) {
                   return const LoadingIndicator(message: 'Loading ratings...');
                 }
@@ -93,7 +93,7 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: prov.artistRatings.length,
-                    separatorBuilder: (_, __) => const Divider(height: 24),
+                    separatorBuilder: (_, _) => const Divider(height: 24),
                     itemBuilder: (_, i) {
                       final rating = prov.artistRatings[i];
                       return Column(
@@ -102,12 +102,13 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                           Row(
                             children: [
                               RatingStars(
-                                  rating: rating.stars.toDouble(), size: 18),
+                                rating: rating.stars.toDouble(),
+                                size: 18,
+                              ),
                               const Spacer(),
                               if (rating.createdAt != null)
                                 Text(
-                                  DateFormat.yMMMd()
-                                      .format(rating.createdAt!),
+                                  DateFormat.yMMMd().format(rating.createdAt!),
                                   style: const TextStyle(
                                     color: AppTheme.textLight,
                                     fontSize: 12,

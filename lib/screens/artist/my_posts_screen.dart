@@ -44,8 +44,10 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete',
-                style: TextStyle(color: AppTheme.errorColor)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Color(0xFFED4956)),
+            ),
           ),
         ],
       ),
@@ -59,6 +61,9 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
             content: Text(success ? 'Post deleted' : 'Failed to delete post'),
             backgroundColor:
                 success ? AppTheme.successColor : AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         );
         if (success) _loadPosts();
@@ -69,17 +74,31 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Posts')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'My Posts',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 22,
+            color: Color(0xFF262626),
+          ),
+        ),
+        centerTitle: false,
+      ),
       body: Consumer<PostProvider>(
-        builder: (_, postProv, __) {
+        builder: (_, postProv, _) {
           if (postProv.isLoading) {
             return const LoadingIndicator(message: 'Loading your posts...');
           }
 
           if (postProv.myPosts.isEmpty) {
             return const EmptyState(
-              icon: Icons.art_track,
-              message: 'You haven\'t created any posts yet.\nTap Create to get started!',
+              icon: Icons.camera_alt_outlined,
+              message:
+                  'You haven\'t created any posts yet.\nTap Create to get started!',
             );
           }
 
@@ -87,14 +106,25 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
             color: AppTheme.primary,
             onRefresh: () async => _loadPosts(),
             child: ListView.builder(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: EdgeInsets.zero,
               itemCount: postProv.myPosts.length,
               itemBuilder: (_, i) {
                 final post = postProv.myPosts[i];
                 return PostCard(
                   post: post,
                   showStatus: true,
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.editPost,
+                      arguments: post,
+                    ).then((_) => _loadPosts());
+                  },
                   trailing: PopupMenuButton<String>(
+                    icon: const Icon(
+                      Icons.more_horiz_rounded,
+                      color: Color(0xFF262626),
+                    ),
                     onSelected: (value) {
                       if (value == 'edit') {
                         Navigator.pushNamed(
@@ -111,7 +141,8 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit, size: 18, color: AppTheme.primary),
+                            Icon(Icons.edit_outlined,
+                                size: 18, color: AppTheme.primary),
                             SizedBox(width: 8),
                             Text('Edit'),
                           ],
@@ -121,11 +152,16 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete,
-                                size: 18, color: AppTheme.errorColor),
+                            Icon(
+                              Icons.delete_outline,
+                              size: 18,
+                              color: Color(0xFFED4956),
+                            ),
                             SizedBox(width: 8),
-                            Text('Delete',
-                                style: TextStyle(color: AppTheme.errorColor)),
+                            Text(
+                              'Delete',
+                              style: TextStyle(color: Color(0xFFED4956)),
+                            ),
                           ],
                         ),
                       ),
