@@ -37,22 +37,32 @@ class _RateArtistScreenState extends State<RateArtistScreen> {
 
   Future<void> _loadExistingRating() async {
     final customerId = context.read<AuthProvider>().currentUser?.uid;
-    if (customerId == null) return;
+    if (customerId == null) {
+      if (mounted) setState(() => _loadingExisting = false);
+      return;
+    }
 
-    final existing = await context.read<RatingProvider>().getExistingRating(
-      customerId,
-      widget.artistId,
-    );
+    try {
+      final existing = await context.read<RatingProvider>().getExistingRating(
+        customerId,
+        widget.artistId,
+      );
 
-    if (mounted) {
-      setState(() {
-        _existingRating = existing;
-        if (existing != null) {
-          _rating = existing.stars.toDouble();
-          _feedbackController.text = existing.feedback;
-        }
-        _loadingExisting = false;
-      });
+      if (mounted) {
+        setState(() {
+          _existingRating = existing;
+          if (existing != null) {
+            _rating = existing.stars.toDouble();
+            _feedbackController.text = existing.feedback;
+          }
+          _loadingExisting = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading existing rating: $e');
+      if (mounted) {
+        setState(() => _loadingExisting = false);
+      }
     }
   }
 

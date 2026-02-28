@@ -38,7 +38,12 @@ class RatingProvider extends ChangeNotifier {
     String customerId,
     String artistId,
   ) async {
-    return await _firestoreService.getExistingRating(customerId, artistId);
+    try {
+      return await _firestoreService.getExistingRating(customerId, artistId);
+    } catch (e) {
+      debugPrint('Error fetching existing rating: $e');
+      return null;
+    }
   }
 
   Future<bool> submitRating({

@@ -64,8 +64,9 @@ class PostCard extends StatelessWidget {
                       ),
                       child: CircleAvatar(
                         radius: 16,
-                        backgroundColor:
-                            AppTheme.primary.withValues(alpha: 0.12),
+                        backgroundColor: AppTheme.primary.withValues(
+                          alpha: 0.12,
+                        ),
                         child: Text(
                           post.artistName.isNotEmpty
                               ? post.artistName[0].toUpperCase()
@@ -110,7 +111,7 @@ class PostCard extends StatelessWidget {
                   _buildStatusBadge(post.status),
                   const SizedBox(width: 8),
                 ],
-                if (trailing != null) trailing!,
+                ?trailing,
               ],
             ),
           ),
@@ -225,10 +226,7 @@ class PostCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF262626),
-                ),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF262626)),
                 children: [
                   TextSpan(
                     text: post.artistName,
@@ -237,9 +235,7 @@ class PostCard extends StatelessWidget {
                   const TextSpan(text: '  '),
                   TextSpan(
                     text: post.description,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w400,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w400),
                   ),
                 ],
               ),
@@ -251,10 +247,7 @@ class PostCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
             child: Text(
               _timeAgo(post.createdAt),
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.grey[500], fontSize: 12),
             ),
           ),
 

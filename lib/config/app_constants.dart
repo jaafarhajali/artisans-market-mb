@@ -40,7 +40,7 @@ class AppConstants {
 
   // Payment constants
   static const double platformFeePercent = 0.10;
-  static const double minWithdrawal = 20.0;
+  static const double minWithdrawal = 5.0;
   static const int refundDays = 7;
   static const String currency = 'USD';
 
